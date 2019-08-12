@@ -1,42 +1,43 @@
-package me.scf37.fine.route.impl
+package me.scf37.fine.route.endpoint.impl
 
 import cats.Applicative
 import cats.MonadError
-import me.scf37.fine.route.typeclass.RequestBody
-import me.scf37.fine.route.typeclass.ResponseBody
-import me.scf37.fine.route.MatchedRequest
-import me.scf37.fine.route.typeclass.RequestParam
-import me.scf37.fine.route.Route
 import me.scf37.fine.route.RouteBadPathParameterException
 import me.scf37.fine.route.RouteBadQueryParameterException
-import me.scf37.fine.route.RouteBuilder
 import me.scf37.fine.route.RouteNoPathParameterException
 import me.scf37.fine.route.RouteNoQueryParameterException
+import me.scf37.fine.route.endpoint.Endpoint
+import me.scf37.fine.route.endpoint.EndpointBuilder
+import me.scf37.fine.route.endpoint.MatchedRequest
 import me.scf37.fine.route.meta.Meta
 import me.scf37.fine.route.meta.MetaBody
 import me.scf37.fine.route.meta.MetaMethod
 import me.scf37.fine.route.meta.MetaResultCode
 import me.scf37.fine.route.meta.MultiMetaParameter
 import me.scf37.fine.route.meta.SingleMetaParameter
+import me.scf37.fine.route.typeclass.RequestBody
+import me.scf37.fine.route.typeclass.RequestParam
 import me.scf37.fine.route.typeclass.RequestParams
+import me.scf37.fine.route.typeclass.ResponseBody
 import me.scf37.fine.route.typeclass.RouteHttpResponse
 
 import scala.reflect.runtime.universe._
 
 
-trait RouteBuilderImpl[F[_], Req, Resp, Produces, Handler, NextBuilder[_], RespBuilder[_]]
-  extends RouteBuilder[F, Req, Resp, Produces, Handler, NextBuilder, RespBuilder] {
+trait EndpointBuilderImpl[F[_], Req, Resp, Produces, Handler, NextBuilder[_], RespBuilder[_]]
+  extends EndpointBuilder[F, Req, Resp, Produces, Handler, NextBuilder, RespBuilder] {
 
-  private implicit val ff: MonadError[F, Throwable] = f
+  private implicit val ff: MonadError[F, Throwable] = monadError
   private implicit val respT1: RouteHttpResponse[Resp] = respT
 
-  protected def f: MonadError[F, Throwable]
+  protected def monadError: MonadError[F, Throwable]
   protected def respT: RouteHttpResponse[Resp]
   protected def self(m: Meta => Meta): Self
   protected def next[T](m: Meta => Meta, value: MatchedRequest[Req] => F[T]): NextBuilder[T]
   protected def resp[T](m: Meta => Meta, value: T => F[Resp]): RespBuilder[T]
   protected def makeHandler(handler: Handler): MatchedRequest[Req] => F[Resp]
   protected def meta: Meta
+  protected def onEndpointCreated: Endpoint[F, Req, Resp] => Unit
 
   override def pathParam[T: TypeTag: RequestParam](name: String, description: String): NextBuilder[T] = next(
     meta => meta.copy(params = meta.params :+ SingleMetaParameter(name, description, implicitly[TypeTag[T]], true)),
@@ -69,7 +70,7 @@ trait RouteBuilderImpl[F[_], Req, Resp, Produces, Handler, NextBuilder[_], RespB
 
   override def consumes[T: TypeTag: RequestBody]: NextBuilder[T] = next(
     meta => meta.copy(consumes = Some(MetaBody(RequestBody[T].contentType, implicitly))),
-    req => lift(RequestBody[T].parse(req.body), identity)
+    req => lift(RequestBody[T].parse(req.body()), identity)
   )
 
   override def produces[T: TypeTag: ResponseBody]: RespBuilder[T] = resp(
@@ -90,7 +91,7 @@ trait RouteBuilderImpl[F[_], Req, Resp, Produces, Handler, NextBuilder[_], RespB
 
   override def routeData(value: Any): Self = self(_.copy(routeData = Some(value)))
 
-  override def tagDescription(tag: String, description: String): RouteBuilderImpl.this.type = ???
+  override def tagDescription(tag: String, description: String): EndpointBuilderImpl.this.type = ???
 
   override def withRequest: NextBuilder[Req] = next(
     meta => meta,
@@ -102,20 +103,24 @@ trait RouteBuilderImpl[F[_], Req, Resp, Produces, Handler, NextBuilder[_], RespB
     req => Applicative[F].pure(req.unmatchedPath)
   )
 
-  override def get(pathPattern: String)(h: Handler): Route[F, Req, Resp] = route(MetaMethod.GET, pathPattern, h)
+  override def get(pathPattern: String)(h: Handler): Endpoint[F, Req, Resp] = endpoint(MetaMethod.GET, pathPattern, h)
 
-  override def put(pathPattern: String)(h: Handler): Route[F, Req, Resp] = route(MetaMethod.PUT, pathPattern, h)
+  override def put(pathPattern: String)(h: Handler): Endpoint[F, Req, Resp] = endpoint(MetaMethod.PUT, pathPattern, h)
 
-  override def post(pathPattern: String)(h: Handler): Route[F, Req, Resp] = route(MetaMethod.POST, pathPattern, h)
+  override def post(pathPattern: String)(h: Handler): Endpoint[F, Req, Resp] = endpoint(MetaMethod.POST, pathPattern, h)
 
-  override def delete(pathPattern: String)(h: Handler): Route[F, Req, Resp] = route(MetaMethod.DELETE, pathPattern, h)
+  override def delete(pathPattern: String)(h: Handler): Endpoint[F, Req, Resp] = endpoint(MetaMethod.DELETE, pathPattern, h)
 
-  override def patch(pathPattern: String)(h: Handler): Route[F, Req, Resp] = route(MetaMethod.PATCH, pathPattern, h)
+  override def patch(pathPattern: String)(h: Handler): Endpoint[F, Req, Resp] = endpoint(MetaMethod.PATCH, pathPattern, h)
 
-  private def route(method: MetaMethod, pathPattern: String, h: Handler): Route[F, Req, Resp] = Route(
-    meta = meta.copy(pathPattern = pathPattern, method = method),
-    handle = makeHandler(h)
-  )
+  private def endpoint(method: MetaMethod, pathPattern: String, h: Handler): Endpoint[F, Req, Resp] = {
+    val e = Endpoint(
+      meta = meta.copy(pathPattern = pathPattern, method = method),
+      handle = makeHandler(h)
+    )
+    onEndpointCreated(e)
+    e
+  }
 
   private def lift[A, E <: Throwable](e: Either[E, A], f: Throwable => Throwable): F[A] = e match {
     case Left(e) => MonadError[F, Throwable].raiseError(f(e))

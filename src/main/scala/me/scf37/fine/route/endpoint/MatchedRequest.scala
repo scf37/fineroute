@@ -1,4 +1,4 @@
-package me.scf37.fine.route
+package me.scf37.fine.route.endpoint
 
 import me.scf37.fine.route.meta.Meta
 
@@ -9,5 +9,5 @@ case class MatchedRequest[Req](
   unmatchedPath: String,
   pathParams: Map[String, String],
   queryParams: Map[String, String],
-  body: Array[Byte]
+  body: () => Array[Byte]
 )

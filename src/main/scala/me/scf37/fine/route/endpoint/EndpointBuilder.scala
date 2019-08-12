@@ -1,14 +1,13 @@
-package me.scf37.fine.route
+package me.scf37.fine.route.endpoint
 
 import me.scf37.fine.route.typeclass.RequestBody
-import me.scf37.fine.route.typeclass.ResponseBody
 import me.scf37.fine.route.typeclass.RequestParam
 import me.scf37.fine.route.typeclass.RequestParams
-
+import me.scf37.fine.route.typeclass.ResponseBody
 import scala.reflect.runtime.universe._
 
-trait RouteBuilder[F[_], Req, Resp, Produces, Handler, NextBuilder[_], RespBuilder[_]] {
-  type Self = RouteBuilder[F, Req, Resp, Produces, Handler, NextBuilder, RespBuilder]
+trait EndpointBuilder[F[_], Req, Resp, Produces, Handler, NextBuilder[_], RespBuilder[_]] {
+  type Self = EndpointBuilder[F, Req, Resp, Produces, Handler, NextBuilder, RespBuilder]
 
   def withRequest: NextBuilder[Req]
   def withUnmatchedPath: NextBuilder[String]
@@ -30,9 +29,9 @@ trait RouteBuilder[F[_], Req, Resp, Produces, Handler, NextBuilder[_], RespBuild
 
   def tagDescription(tag: String, description: String): this.type
 
-  def get(pathPattern: String)(h: Handler): Route[F, Req, Resp]
-  def put(pathPattern: String)(h: Handler): Route[F, Req, Resp]
-  def post(pathPattern: String)(h: Handler): Route[F, Req, Resp]
-  def delete(pathPattern: String)(h: Handler): Route[F, Req, Resp]
-  def patch(pathPattern: String)(h: Handler): Route[F, Req, Resp]
+  def get(pathPattern: String)(h: Handler): Endpoint[F, Req, Resp]
+  def put(pathPattern: String)(h: Handler): Endpoint[F, Req, Resp]
+  def post(pathPattern: String)(h: Handler): Endpoint[F, Req, Resp]
+  def delete(pathPattern: String)(h: Handler): Endpoint[F, Req, Resp]
+  def patch(pathPattern: String)(h: Handler): Endpoint[F, Req, Resp]
 }

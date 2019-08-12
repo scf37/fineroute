@@ -1,54 +1,29 @@
-package me.scf37.fine.route
+package me.scf37.fine.route.endpoint
 
 import cats.implicits._
+import me.scf37.fine.route.RouteBadPathParameterException
+import me.scf37.fine.route.RouteBadQueryParameterException
+import me.scf37.fine.route.RouteNoPathParameterException
+import me.scf37.fine.route.RouteNoQueryParameterException
+import me.scf37.fine.route.endpoint
 import me.scf37.fine.route.meta.Meta
 import me.scf37.fine.route.meta.MetaMethod
 import me.scf37.fine.route.meta.MetaResultCode
 import me.scf37.fine.route.meta.MultiMetaParameter
 import me.scf37.fine.route.meta.SingleMetaParameter
-import me.scf37.fine.route.typeclass.RequestBody
-import me.scf37.fine.route.typeclass.RequestParams
-import me.scf37.fine.route.typeclass.ResponseBody
+import me.scf37.fine.route.model.Params
+import me.scf37.fine.route.model.Request
+import me.scf37.fine.route.model.RequestBody1
+import me.scf37.fine.route.model.Response
+import me.scf37.fine.route.model.ResponseBody1
 import me.scf37.fine.route.typeclass.RouteHttpResponse
 import org.scalatest.FreeSpec
 
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
-import scala.util.Try
 
-case class Request(data: String)
-case class Response(
-  data: String,
-  contentType: String
-)
-case class RequestBody1(data: String)
-object RequestBody1 {
-  implicit val p = new RequestBody[RequestBody1] {
-    override def parse(request: Array[Byte]): Either[RouteException, RequestBody1] =
-      Right(RequestBody1(new String(request)))
-
-    override def contentType: String = "application/x-www-form-urlencoded"
-  }
-}
-
-case class ResponseBody1(data: String)
-object ResponseBody1 {
-  implicit val p = new ResponseBody[ResponseBody1] {
-    override def contentType: String = "application/json"
-
-    override def write(body: ResponseBody1): Either[Throwable, Array[Byte]] = Right(body.data.getBytes())
-  }
-}
-case class Params(a: Int, b: String)
-object Params {
-  implicit val p1 = new RequestParams[Params] {
-    override def parse(paramsMap: Map[String, String]): Either[Throwable, Params] =
-      Try(Params(a = paramsMap("a").toInt, b = paramsMap("b"))).toEither
-  }
-}
-
-class RouteBuilderTest extends FreeSpec {
+class EndpointBuilderTest extends FreeSpec {
   import scala.concurrent.ExecutionContext.Implicits.global
   implicit val respT = new RouteHttpResponse[Response] {
     override def write(arr: Array[Byte], contentType: String): Either[Throwable, Response] =
@@ -56,7 +31,7 @@ class RouteBuilderTest extends FreeSpec {
   }
 
   "meta should populate correctly" in {
-    val route = Route.builder[Future, Request, Response]
+    val route = Endpoint.builder[Future, Request, Response]
 
       .summary("summary")
       .description("description")
@@ -122,7 +97,7 @@ class RouteBuilderTest extends FreeSpec {
   }
 
   "simplest route should not fail" in {
-    val r = Route.builder[Future, Request, Response]
+    val r = Endpoint.builder[Future, Request, Response]
       .get("/{param}") { () =>
         val r2: Response = Response("hello", "")
         Future successful r2
@@ -132,7 +107,7 @@ class RouteBuilderTest extends FreeSpec {
   }
 
   "passing request as parameter should work" in {
-    val r = Route.builder[Future, Request, Response]
+    val r = Endpoint.builder[Future, Request, Response]
       .withRequest
       .get("/{param}") { (req) =>
         assert(req.data == "hello")
@@ -144,7 +119,7 @@ class RouteBuilderTest extends FreeSpec {
   }
 
   "passing unmatched path as parameter should work" in {
-    val r = Route.builder[Future, Request, Response]
+    val r = Endpoint.builder[Future, Request, Response]
       .withUnmatchedPath
       .get("/{param}") { (path) =>
         assert(path == "unmatchedPath")
@@ -156,7 +131,7 @@ class RouteBuilderTest extends FreeSpec {
   }
 
   "path parameter parsing should work" - {
-    val r = Route.builder[Future, Request, Response]
+    val r = Endpoint.builder[Future, Request, Response]
       .pathParam[String]("p1", "p1 param")
       .pathParams[Params]
       .get("/{param}") { (p1, pp) =>
@@ -187,7 +162,7 @@ class RouteBuilderTest extends FreeSpec {
 
   "query parameter parsing should work" - {
     "mandatory parameters" - {
-      val r = Route.builder[Future, Request, Response]
+      val r = Endpoint.builder[Future, Request, Response]
         .queryParam[String]("p1", "p1 param")
         .queryParams[Params]
         .get("/{param}") { (p1, pp) =>
@@ -217,7 +192,7 @@ class RouteBuilderTest extends FreeSpec {
     }
 
     "optional parameters" - {
-      val r = Route.builder[Future, Request, Response]
+      val r = Endpoint.builder[Future, Request, Response]
         .queryParam[Boolean]("isNone", "test - expect Nones if true")
         .queryParam[Option[String]]("p1", "p1 param")
         .queryParams[Option[Params]]
@@ -253,18 +228,18 @@ class RouteBuilderTest extends FreeSpec {
   }
 
   "request body parsing should work" in {
-    val r = Route.builder[Future, Request, Response]
+    val r = Endpoint.builder[Future, Request, Response]
       .consumes[RequestBody1]
       .post("/") { (req) =>
         val r2: Response = Response(req.data + "-resp", "my-ct")
         Future successful r2
       }
 
-    assert(r.handle(mr(r).copy(body = "test body".getBytes())).get == Response("test body-resp", "my-ct"))
+    assert(r.handle(mr(r).copy(body = () => "test body".getBytes())).get == Response("test body-resp", "my-ct"))
   }
 
   "response body serialization should work" in {
-    val r = Route.builder[Future, Request, Response]
+    val r = Endpoint.builder[Future, Request, Response]
       .produces[ResponseBody1]
       .queryParam[String]("p", "content for response")
       .post("/") { (p) =>
@@ -280,14 +255,14 @@ class RouteBuilderTest extends FreeSpec {
     def get: A = Await.result(f, Duration.Inf)
   }
 
-  private def mr(r: Route[Future, Request, Response], req: Request = Request("hello")): MatchedRequest[Request] = MatchedRequest(
+  private def mr(r: Endpoint[Future, Request, Response], req: Request = Request("hello")): MatchedRequest[Request] = endpoint.MatchedRequest(
     req = req,
     url = "/",
     meta = Meta(),
     unmatchedPath = "unmatchedPath",
     pathParams = Map.empty,
     queryParams = Map.empty,
-    body = Array.empty
+    body = () => Array.empty
   )
 
 }

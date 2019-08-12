@@ -3,7 +3,7 @@ package me.scf37.fine.route.meta
 import scala.reflect.runtime.universe._
 
 case class Meta(
-  method: MetaMethod = MetaMethod.NONE,
+  method: MetaMethod = MetaMethod.GET,
   pathPattern: String = "",
   tags: List[String] = Nil,
   summary: String = "",
@@ -26,7 +26,6 @@ case class MultiMetaParameter(mf: TypeTag[_], inPath: Boolean) extends MetaParam
 sealed trait MetaMethod
 
 object MetaMethod {
-  object NONE extends MetaMethod
   object GET extends MetaMethod
   object PUT extends MetaMethod
   object POST extends MetaMethod
