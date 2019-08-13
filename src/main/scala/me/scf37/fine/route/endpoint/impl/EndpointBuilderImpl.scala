@@ -23,7 +23,7 @@ import me.scf37.fine.route.typeclass.RouteHttpResponse
 
 import scala.reflect.runtime.universe._
 
-
+/** Skeletal implementation of EndpointBuilder, reducing count of methods to implement */
 trait EndpointBuilderImpl[F[_], Req, Resp, Produces, Handler, NextBuilder[_], RespBuilder[_]]
   extends EndpointBuilder[F, Req, Resp, Produces, Handler, NextBuilder, RespBuilder] {
 
@@ -36,8 +36,10 @@ trait EndpointBuilderImpl[F[_], Req, Resp, Produces, Handler, NextBuilder[_], Re
   protected def next[T](m: Meta => Meta, value: MatchedRequest[Req] => F[T]): NextBuilder[T]
   protected def resp[T](m: Meta => Meta, value: T => F[Resp]): RespBuilder[T]
   protected def makeHandler(handler: Handler): MatchedRequest[Req] => F[Resp]
-  protected def meta: Meta
+  protected def meta0: Meta
   protected def onEndpointCreated: Endpoint[F, Req, Resp] => Unit
+
+  override def meta(f: Meta => Meta): Self = self(f)
 
   override def pathParam[T: TypeTag: RequestParam](name: String, description: String): NextBuilder[T] = next(
     meta => meta.copy(params = meta.params :+ SingleMetaParameter(name, description, implicitly[TypeTag[T]], true)),
@@ -115,7 +117,7 @@ trait EndpointBuilderImpl[F[_], Req, Resp, Produces, Handler, NextBuilder[_], Re
 
   private def endpoint(method: MetaMethod, pathPattern: String, h: Handler): Endpoint[F, Req, Resp] = {
     val e = Endpoint(
-      meta = meta.copy(pathPattern = pathPattern, method = method),
+      meta = meta0.copy(pathPattern = pathPattern, method = method),
       handle = makeHandler(h)
     )
     onEndpointCreated(e)

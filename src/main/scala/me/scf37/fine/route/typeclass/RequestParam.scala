@@ -1,5 +1,10 @@
 package me.scf37.fine.route.typeclass
 
+/**
+ * Typeclass for parsing single request parameter to type T
+ *
+ * @tparam T
+ */
 trait RequestParam[T] {
   def parse(value: String): Either[Throwable, T]
 }

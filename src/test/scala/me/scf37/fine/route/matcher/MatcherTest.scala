@@ -10,6 +10,11 @@ class MatcherTest extends FreeSpec {
       assert(pt.get(path.toList) == Some(Matched(Nil, Nil, v)))
     }
 
+    def checkFalse(path: Array[String]): Unit = {
+      val v = if (path.isEmpty) "empty" else path.mkString
+      assert(pt.get(path.toList).isEmpty)
+    }
+
     def add(path: Array[String]): Unit = {
       val v = if (path.isEmpty) "empty" else path.mkString
       pt = pt.add(path.toList, v)
@@ -26,6 +31,9 @@ class MatcherTest extends FreeSpec {
 
     paths.foreach(add)
     paths.foreach(check)
+    checkFalse(Array("b"))
+    checkFalse(Array("a", "x"))
+    checkFalse(Array("a", "b" , "d"))
   }
 
   "path variable test" in {
@@ -42,6 +50,11 @@ class MatcherTest extends FreeSpec {
       assert(r == Some(Matched(paramsList,  Nil, v)))
     }
 
+    def checkFalse(path: List[String]) = {
+      val r = pt.get(path)
+      assert(r.isEmpty)
+    }
+
     add(List())
     add(List("{a}"))
     add(List("{a}", "b"))
@@ -55,6 +68,9 @@ class MatcherTest extends FreeSpec {
     check(List("a", "b", "c"), "ac")
     check(List("a", "d", "e"), "ae")
     check(List("a", "f", "g"), "a")
+
+    checkFalse(List("a", "c"))
+    checkFalse(List("a", "b", "c", "d"))
 
     pt = EmptyPathNode[String]()
     add(List("x"))

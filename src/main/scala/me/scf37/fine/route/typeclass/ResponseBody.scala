@@ -1,5 +1,10 @@
 package me.scf37.fine.route.typeclass
 
+/**
+ * Typeclass for serialization of Response, used by .produces[T]
+ *
+ * @tparam T
+ */
 trait ResponseBody[T] {
   def contentType: String
   def write(body: T): Either[Throwable, Array[Byte]]

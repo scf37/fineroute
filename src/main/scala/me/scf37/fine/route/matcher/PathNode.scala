@@ -41,12 +41,22 @@ sealed trait PathNode[V] {
    */
   def add(path: List[String], value: V): PathNode[V]
 
-  def addNode(node: PathNode[V]): PathNode[V]
+  /**
+   * Combine this node with other node, merging paths
+   * @param node node to combine with
+   * @return node containing paths from both nodes or exception on conflict
+   */
+  def combine(node: PathNode[V]): PathNode[V]
 
   /**
    * @return value of this node, if set
    */
   def value: Option[V]
+
+  /**
+   * @return all values from this tree
+   */
+  def values: List[V]
 }
 
 object PathNode {
@@ -56,7 +66,7 @@ object PathNode {
   implicit def m[V]: CommutativeMonoid[PathNode[V]] = new CommutativeMonoid[PathNode[V]] {
     override def empty: PathNode[V] = PathNode[V]
 
-    override def combine(x: PathNode[V], y: PathNode[V]): PathNode[V] = x.addNode(y)
+    override def combine(x: PathNode[V], y: PathNode[V]): PathNode[V] = x.combine(y)
   }
 
   private[matcher] def asVar(s: String): Option[String] =
@@ -90,7 +100,7 @@ case class PlainPathNode[V](
       copy(children = this.children + (part -> children.getOrElse(part, EmptyPathNode[V]()).add(tail, value)))
   }
 
-  override def addNode(node: PathNode[V]): PathNode[V] = {
+  override def combine(node: PathNode[V]): PathNode[V] = {
     node match {
       case PlainPathNode(value, children) =>
         if (node.value.isDefined && value.isDefined)
@@ -101,11 +111,13 @@ case class PlainPathNode[V](
           children.combine(this.children)
         )
 
-      case EmptyPathNode(value) => node.addNode(this)
+      case EmptyPathNode(value) => node.combine(this)
 
       case _ => throw new IllegalArgumentException("Conflicting path")
     }
   }
+
+  override def values: List[V] = value.fold[List[V]](Nil)(List(_)) ::: children.values.flatMap(_.values).toList
 }
 
 // represents path with /{var} child
@@ -140,23 +152,25 @@ case class VarPathNode[V](
       copy(node = node.add(tail, value))
   }
 
-  override def addNode(node: PathNode[V]): PathNode[V] = {
+  override def combine(node: PathNode[V]): PathNode[V] = {
     node match {
       case VarPathNode(name, value, node) =>
         if (name != this.name)
           throw new IllegalArgumentException(s"Conflicting path variable name in path: '$name' vs '${this.name}'")
         if (node.value.isDefined && value.isDefined)
           throw new IllegalArgumentException("Duplicate path")
-        VarPathNode(name, this.value.orElse(value), node.addNode(this.node))
+        VarPathNode(name, this.value.orElse(value), node.combine(this.node))
 
       case EmptyPathNode(value) =>
-        node.addNode(this)
+        node.combine(this)
 
       case _ =>
         throw new IllegalArgumentException("Conflicting path")
 
     }
   }
+
+  override def values: List[V] = value.fold[List[V]](Nil)(List(_)) ::: node.values
 }
 
 // represents path with star child
@@ -174,21 +188,26 @@ case class StarPathNode[V](
     this
   }
 
-  override def addNode(node: PathNode[V]): PathNode[V] = {
+  override def combine(node: PathNode[V]): PathNode[V] = {
     node match {
-      case EmptyPathNode(value) => node.addNode(this)
+      case EmptyPathNode(value) => node.combine(this)
       case _ =>
         throw new IllegalArgumentException("conflicting path")
     }
   }
 
   override val value: Option[V] = Some(value0)
+
+  override def values: List[V] = List(value0)
 }
 
 // represents empty path without children
 case class EmptyPathNode[V](value: Option[V] = None) extends PathNode[V] {
   override def get(path: List[String]): Option[Matched[V]] = {
-    value.map(v => Matched(Nil, Nil, v))
+    if (path.isEmpty)
+      value.map(v => Matched(Nil, Nil, v))
+    else
+      None
   }
 
   override def add(path: List[String], value: V): PathNode[V] = path match {
@@ -206,7 +225,7 @@ case class EmptyPathNode[V](value: Option[V] = None) extends PathNode[V] {
       }
   }
 
-  override def addNode(node: PathNode[V]): PathNode[V] = {
+  override def combine(node: PathNode[V]): PathNode[V] = {
     if (node.value.isDefined && value.isDefined)
       throw new IllegalArgumentException("Duplicate path")
 
@@ -215,4 +234,6 @@ case class EmptyPathNode[V](value: Option[V] = None) extends PathNode[V] {
     else
       node
   }
+
+  override def values: List[V] = value.toList
 }

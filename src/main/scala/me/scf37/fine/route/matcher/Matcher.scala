@@ -59,17 +59,24 @@ case class Matcher[F[_]: MonadError[?[_], Throwable], Req: RouteHttpRequest, Res
 
       case Some(pathNode) =>
         val url = RouteHttpRequest[Req].url(req)
+        if (url.isEmpty)
+          MonadError[F, Throwable].raiseError(RouteUnmatchedException)
+        else
+          pathNode.get(extractPathParts(url)) match {
+            case None => MonadError[F, Throwable].raiseError(RouteUnmatchedException)
 
-        pathNode.get(extractPathParts(url)) match {
-          case None => MonadError[F, Throwable].raiseError(RouteUnmatchedException)
-
-          case Some(matched) =>
-            Monad[F].pure(
-              makeRequest(req, matched.unmatched.mkString("/"), matched.params.toMap, matched.value) -> matched.value
-            )
-        }
+            case Some(matched) =>
+              Monad[F].pure(
+                makeRequest(req, matched.unmatched.mkString("/"), matched.params.toMap, matched.value) -> matched.value
+              )
+          }
     }
   }
+
+  /**
+   * @return all endpoints known to this matcher
+   */
+  def endpoints: List[Endpoint[F, Req, Resp]] = roots.values.flatMap(_.values).toList
 
   private def extractPathParts(url: String): List[String] = {
     val path = url.indexOf("?") match {
@@ -81,7 +88,7 @@ case class Matcher[F[_]: MonadError[?[_], Throwable], Req: RouteHttpRequest, Res
     var i = path.length - 1
     while (i > 0 && path(i) == '/') i -= 1
 
-    path.substring(1, i).split("/").toList
+    path.substring(1, i + 1).split("/").toList
   }
 
   private def makeRequest(
