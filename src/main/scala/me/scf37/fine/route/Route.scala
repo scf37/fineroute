@@ -3,6 +3,7 @@ package me.scf37.fine.route
 import cats.MonadError
 import cats.implicits._
 import cats.kernel.CommutativeMonoid
+import cats.kernel.Monoid
 import cats.~>
 import me.scf37.fine.route.endpoint.Endpoint
 import me.scf37.fine.route.matcher.Matcher
@@ -42,7 +43,7 @@ import me.scf37.fine.route.typeclass.RouteHttpResponse
  * @tparam Req Route HTTP request type, must be RouteHttpRequest
  * @tparam Resp Route HTTP response type, must be RouteHttpResponse
  */
-trait Route[F[_], Req, Resp] extends (Req => F[() => F[Resp]]) {
+trait Route[F[_], Req, Resp] extends DumbRoute[F, Req, Resp] {
   /** MonadError instance for F, implement it */
   protected def monadError: MonadError[F, Throwable]
 
@@ -60,7 +61,7 @@ trait Route[F[_], Req, Resp] extends (Req => F[() => F[Resp]]) {
   private var matcher: Matcher[F, Req, Resp] = Matcher[F, Req, Resp]()
 
   /** meta information on route endpoints, used to generate docs and clients */
-  def meta: Seq[Meta] = matcher.endpoints.map(_.meta)
+  override def meta: Seq[Meta] = matcher.endpoints.map(_.meta)
 
   /**
    * Look up handler by request
@@ -89,7 +90,7 @@ trait Route[F[_], Req, Resp] extends (Req => F[() => F[Resp]]) {
    * @param r another route
    * @return new route containing endpoints from both routes
    */
-  def andThen(r: Route[F, Req, Resp]): Route[F, Req, Resp] = this combine r
+  def combine(r: Route[F, Req, Resp]): Route[F, Req, Resp] = Monoid[Route[F, Req, Resp]].combine(this, r)
 
   /**
    * Map route response

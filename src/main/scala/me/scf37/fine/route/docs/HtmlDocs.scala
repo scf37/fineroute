@@ -165,8 +165,6 @@ object HtmlDocs {
     }
   }
 
-
-
   private def caseClassDescrption(t: ICaseClass): String = {
     case class Row(name: String, tpe: String, desc: String, ro: Boolean)
 
