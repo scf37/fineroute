@@ -212,6 +212,7 @@ case class EmptyPathNode[V](value: Option[V] = None) extends PathNode[V] {
 
   override def add(path: List[String], value: V): PathNode[V] = path match {
     case Nil =>
+      if (this.value.isDefined) throw new IllegalArgumentException("duplicate path")
       copy(value = Some(value))
 
     case part :: tail =>

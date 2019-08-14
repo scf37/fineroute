@@ -10,15 +10,5 @@ target
 .cache-tests
 rebel.xml
 /bin
-/src/main/webapp/WEB-INF/app/main.css
-/src/main/webapp/WEB-INF/app/main.js
-/logs
-/web3-core/data
-/web3-web/data
-/web3-main/data
 .idea
-backup*.bz2
-node_modules
-/data
-*Css.ts
-web/css/bootstrap.ts
+/.attach*

@@ -11,7 +11,6 @@ class MatcherTest extends FreeSpec {
     }
 
     def checkFalse(path: Array[String]): Unit = {
-      val v = if (path.isEmpty) "empty" else path.mkString
       assert(pt.get(path.toList).isEmpty)
     }
 
@@ -111,6 +110,38 @@ class MatcherTest extends FreeSpec {
     check(List("c", "d"), "d", "", "c{d}*")
     check(List("c", "d", "x"), "d", "x", "c{d}*")
     check(List("c", "d", "x", "y", "z"), "d", "xyz", "c{d}*")
+  }
+
+  "duplicates should fail" - {
+    "same simple paths" in assertThrows[IllegalArgumentException] {
+      EmptyPathNode[String]()
+        .add(List("a"), "")
+        .add(List("a"), "")
+    }
+
+    "same var paths" in assertThrows[IllegalArgumentException] {
+      EmptyPathNode[String]()
+        .add(List("{a}"), "")
+        .add(List("{a}"), "")
+    }
+
+    "simple and var path" in assertThrows[IllegalArgumentException] {
+      EmptyPathNode[String]()
+        .add(List("a"), "")
+        .add(List("{a}"), "")
+    }
+
+    "star and simple path" in assertThrows[IllegalArgumentException] {
+      EmptyPathNode[String]()
+        .add(List("*"), "")
+        .add(List("a"), "")
+    }
+
+    "star and var path" in assertThrows[IllegalArgumentException] {
+      EmptyPathNode[String]()
+        .add(List("*"), "")
+        .add(List("{a}"), "")
+    }
   }
 
 

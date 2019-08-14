@@ -59,10 +59,10 @@ trait EndpointBuilder[F[_], Req, Resp, Produces, Handler, NextBuilder[_], RespBu
   /** Set long endpoint description */
   def description(value: String): Self
 
-  /** register endpoint HTTP result code */
+  /** Register endpoint HTTP result code */
   def resultCode[T: TypeTag](code: Int, description: String): Self
 
-  /** Set custom user data */
+  /** Add custom user data */
   def routeData(value: Any): Self
 
   def tagDescription(tag: String, description: String): this.type

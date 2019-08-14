@@ -91,7 +91,7 @@ trait EndpointBuilderImpl[F[_], Req, Resp, Produces, Handler, NextBuilder[_], Re
   override def resultCode[T: TypeTag](code: Int, description: String): Self =
     self(meta => meta.copy(resultCodes =  meta.resultCodes :+ MetaResultCode(code, description, implicitly)))
 
-  override def routeData(value: Any): Self = self(_.copy(routeData = Some(value)))
+  override def routeData(value: Any): Self = self(m => m.copy(routeData = m.routeData :+ value ))
 
   override def tagDescription(tag: String, description: String): EndpointBuilderImpl.this.type = ???
 

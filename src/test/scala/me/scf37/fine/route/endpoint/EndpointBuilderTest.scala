@@ -52,6 +52,9 @@ class EndpointBuilderTest extends FreeSpec {
         val vq2: Params = q2
         val vreq: RequestBody1 = req
 
+        // remove unused compilation warning
+        (vp1, vq1, vp2, vq2, vreq)
+
         val r2: ResponseBody1 = ResponseBody1("")
         Future successful r2
       }
@@ -63,7 +66,7 @@ class EndpointBuilderTest extends FreeSpec {
     assert(m.description == "description")
     assert(m.tags == List("tag1", "tag2"))
     assert(m.method == MetaMethod.POST)
-    assert(m.routeData == Some("hello"))
+    assert(m.routeData == List("hello"))
     assert(m.consumes.get.mime == "application/x-www-form-urlencoded")
     assert(m.produces.get.mime == "application/json")
     assert(m.resultCodes.size == 2)

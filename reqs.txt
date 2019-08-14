@@ -1,6 +1,0 @@
-Teh Route.
-- composition - routes must be composable with routes, filters, services:
--- filter andThen route - run filter before route if route matches
--- route andThen route - simple
--- route andThen service - produce service with all the filters applied
-- binding
