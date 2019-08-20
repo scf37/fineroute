@@ -4,7 +4,7 @@ import cats.MonadError
 import cats.implicits._
 import me.scf37.fine.route.endpoint.Endpoint
 import me.scf37.fine.route.endpoint.MatchedRequest
-import me.scf37.fine.route.meta.Meta
+import me.scf37.fine.route.endpoint.meta.Meta
 import me.scf37.fine.route.typeclass.RouteHttpResponse
 
 /** Endpoint builder for handler with 0 arguments. See EndpointBuilder for builder API */

@@ -1,6 +1,6 @@
 package me.scf37.fine.route.endpoint
 
-import me.scf37.fine.route.meta.Meta
+import me.scf37.fine.route.endpoint.meta.Meta
 import me.scf37.fine.route.typeclass.RequestBody
 import me.scf37.fine.route.typeclass.RequestParam
 import me.scf37.fine.route.typeclass.RequestParams

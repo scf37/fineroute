@@ -6,7 +6,7 @@ import cats.implicits._
 import me.scf37.fine.route.RouteUnmatchedException
 import me.scf37.fine.route.endpoint.Endpoint
 import me.scf37.fine.route.endpoint.MatchedRequest
-import me.scf37.fine.route.meta.MetaMethod
+import me.scf37.fine.route.endpoint.meta.MetaMethod
 import me.scf37.fine.route.typeclass.RouteHttpRequest
 
 /**

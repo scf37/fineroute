@@ -1,7 +1,7 @@
 package me.scf37.fine.route.model
 
 import me.scf37.fine.route.RouteException
-import me.scf37.fine.route.meta.MetaMethod
+import me.scf37.fine.route.endpoint.meta.MetaMethod
 import me.scf37.fine.route.typeclass.RequestBody
 import me.scf37.fine.route.typeclass.RequestParams
 import me.scf37.fine.route.typeclass.ResponseBody

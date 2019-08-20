@@ -1,8 +1,7 @@
 package me.scf37.fine.route
 
-import cats.MonadError
+import cats.{MonadError, ~>, Monad}
 import cats.implicits._
-import me.scf37.fine.route.meta.Meta
 
 /**
  * Dumb route, cannot be combined or composed, but supports sequential andThen
@@ -23,7 +22,7 @@ trait DumbRoute[F[_], Req, Resp] extends (Req => F[() => F[Resp]]) {
   override def apply(req: Req): F[() => F[Resp]]
 
   /** meta information on route endpoints, used to generate docs and clients */
-  def meta: Seq[Meta]
+  def meta: RouteMeta
 
   /**
    * Compose two routes sequentially, i.e. run first route, then run second if first fails.
@@ -34,8 +33,57 @@ trait DumbRoute[F[_], Req, Resp] extends (Req => F[() => F[Resp]]) {
    * @return
    */
   def andThen(r: DumbRoute[F, Req, Resp])(implicit M: MonadError[F, Throwable]): DumbRoute[F, Req, Resp] =
-    DumbRoute.mk(meta ++ r.meta) { req =>
-      this(req).orElse(r(req))
+    DumbRoute.mk(meta combine r.meta) { req =>
+      this(req).recoverWith {
+        case _: RouteException => r(req)
+      }
+    }
+
+  /**
+   * Map route response
+   *
+   * @param f mapping function
+   * @tparam Resp2 new response type
+   * @return new route with the same endpoints but different response type
+   */
+  def map[Resp2](f: Resp => Resp2)(implicit M: Monad[F]): DumbRoute[F, Req, Resp2] = {
+    DumbRoute.mk(meta)(req => this(req).map(h => (() => h().map(f))))
+  }
+
+  /**
+   * Map route request
+   *
+   * @param f mapping function
+   * @tparam Req2 new request type
+   * @return new route with the same endpoints but different request type
+   */
+  def local[Req2](f: Req2 => Req): DumbRoute[F, Req2, Resp] = {
+    DumbRoute.mk(meta)(req => this(f(req)))
+  }
+
+  /**
+   * Map route effect, e.g. from Route[Either] to Route[Future]
+   * @param f effect mapping function
+   * @tparam G new route effect
+   * @return new route with the same endpoints but different effect type
+   */
+  def mapK[G[_]: MonadError[?[_], Throwable]](f: F ~> G)(implicit M: Monad[F]): DumbRoute[G, Req, Resp] =
+    DumbRoute.mk(meta)(req => f(this(req).map(h => () => f(h()))))
+
+  /**
+   * Wrap this route with filter. Filter is executed after matching but before endpoint handler
+   *
+   * Filter is a function that takes handler and produces another handler.
+   *
+   * @param filter filter
+   * @tparam Resp2 new response type
+   * @return route that wraps endpoint handlers with this filter
+   */
+  def compose[Resp2](filter: (Req => F[Resp]) => (Req => F[Resp2]))(implicit M: Monad[F]): DumbRoute[F, Req, Resp2] =
+    DumbRoute.mk[F, Req, Resp2](meta) { req =>
+      this(req).map { h =>
+        () => filter(r => h())(req)
+      }
     }
 
 }
@@ -50,13 +98,13 @@ object DumbRoute {
    * @tparam Resp HTTP response type
    * @return
    */
-  def mk[F[_], Req, Resp](meta: Seq[Meta])(f: Req => F[() => F[Resp]]): DumbRoute[F, Req, Resp] = {
+  def mk[F[_], Req, Resp](meta: RouteMeta)(f: Req => F[() => F[Resp]]): DumbRoute[F, Req, Resp] = {
     val meta0 = meta
     new DumbRoute[F, Req, Resp] {
       override def apply(req: Req): F[() => F[Resp]] = f(req)
 
       /** meta information on route endpoints, used to generate docs and clients */
-      override def meta: Seq[Meta] = meta0
+      override def meta: RouteMeta = meta0
     }
   }
 }

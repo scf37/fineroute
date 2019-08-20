@@ -1,4 +1,4 @@
-package me.scf37.fine.route.meta
+package me.scf37.fine.route.endpoint.meta
 
 import scala.reflect.runtime.universe._
 
@@ -42,6 +42,10 @@ case class MetaResultCode(code: Int, desc: String, body: TypeTag[_])
 
 case class MetaBody(mime: String, body: TypeTag[_])
 
+object MetaBody {
+  def of[T: TypeTag](mime: String): MetaBody = MetaBody(mime, implicitly)
+}
+
 sealed trait MetaParameter {
   def inPath: Boolean
   def mf: TypeTag[_]
@@ -52,6 +56,14 @@ case class MultiMetaParameter(mf: TypeTag[_], inPath: Boolean) extends MetaParam
 sealed trait MetaMethod
 
 object MetaMethod {
+  def valueOf(s: String): MetaMethod = s.toUpperCase match {
+    case "GET" => GET
+    case "PUT" => PUT
+    case "POST" => POST
+    case "DELETE" => DELETE
+    case "PATCH" => PATCH
+  }
+
   object GET extends MetaMethod {
     override def toString: String = "GET"
   }

@@ -7,7 +7,6 @@ import cats.kernel.Monoid
 import cats.~>
 import me.scf37.fine.route.endpoint.Endpoint
 import me.scf37.fine.route.matcher.Matcher
-import me.scf37.fine.route.meta.Meta
 import me.scf37.fine.route.typeclass.RouteHttpRequest
 import me.scf37.fine.route.typeclass.RouteHttpResponse
 
@@ -43,14 +42,23 @@ import me.scf37.fine.route.typeclass.RouteHttpResponse
  * @tparam Req Route HTTP request type, must be RouteHttpRequest
  * @tparam Resp Route HTTP response type, must be RouteHttpResponse
  */
-trait Route[F[_], Req, Resp] extends DumbRoute[F, Req, Resp] {
-  /** MonadError instance for F, implement it */
+trait Route[F[_], Req, Resp] extends (Req => F[() => F[Resp]]) {
+  /** MonadError instance for F, implement it
+    *
+    * It is important to implement it as def, not as val to avoid NPEs due to val initialization order
+    */
   protected def monadError: MonadError[F, Throwable]
 
-  /** RouteHttpRequest instance for Req, implement it */
+  /** RouteHttpRequest instance for Req, implement it
+    *
+    * It is important to implement it as def, not as val to avoid NPEs due to val initialization order
+    */
   protected def routeHttpRequest: RouteHttpRequest[Req]
 
-  /** RouteHttpResponse instance for Resp, implement it */
+  /** RouteHttpResponse instance for Resp, implement it]
+    *
+    * It is important to implement it as def, not as val to avoid NPEs due to val initialization order
+    */
   protected def routeHttpResponse: RouteHttpResponse[Resp]
 
   private implicit val monadError1: MonadError[F, Throwable] = monadError
@@ -61,7 +69,7 @@ trait Route[F[_], Req, Resp] extends DumbRoute[F, Req, Resp] {
   private var matcher: Matcher[F, Req, Resp] = Matcher[F, Req, Resp]()
 
   /** meta information on route endpoints, used to generate docs and clients */
-  override def meta: Seq[Meta] = matcher.endpoints.map(_.meta)
+  def meta: RouteMeta = RouteMeta(matcher.endpoints.map(_.meta))
 
   /**
    * Look up handler by request

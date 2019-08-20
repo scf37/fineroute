@@ -38,7 +38,7 @@ class RouteTest extends FreeSpec {
   }
 
   "route meta is present" in {
-    assert(r.meta.length == 3)
+    assert(r.meta.endpointMetas.length == 3)
   }
 
   "params are working" in {

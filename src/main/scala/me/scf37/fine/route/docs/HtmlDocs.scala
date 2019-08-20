@@ -2,6 +2,7 @@ package me.scf37.fine.route.docs
 
 import java.lang.annotation.Annotation
 
+import me.scf37.fine.route.RouteMeta
 import me.scf37.fine.route.docs.impl.ICaseClass
 import me.scf37.fine.route.docs.impl.ICaseClassRef
 import me.scf37.fine.route.docs.impl.IEnum
@@ -11,11 +12,11 @@ import me.scf37.fine.route.docs.impl.IPrimitive
 import me.scf37.fine.route.docs.impl.IType
 import me.scf37.fine.route.docs.impl.IUnit
 import me.scf37.fine.route.docs.impl.Introspector
-import me.scf37.fine.route.meta.Meta
-import me.scf37.fine.route.meta.MetaBody
-import me.scf37.fine.route.meta.MetaMethod
-import me.scf37.fine.route.meta.MultiMetaParameter
-import me.scf37.fine.route.meta.SingleMetaParameter
+import me.scf37.fine.route.endpoint.meta.Meta
+import me.scf37.fine.route.endpoint.meta.MetaBody
+import me.scf37.fine.route.endpoint.meta.MetaMethod
+import me.scf37.fine.route.endpoint.meta.MultiMetaParameter
+import me.scf37.fine.route.endpoint.meta.SingleMetaParameter
 
 object HtmlDocs {
   /**
@@ -23,17 +24,17 @@ object HtmlDocs {
    *
    * @param head HTML heading
    * @param tagDescriptions tag descriptions to use when generating
-   * @param endpoints list of endpoints
+   * @param routeMeta route metadata
    * @param introspector introspector to use
    * @return HTML string
    */
   def generateHtml(
     head: String,
     tagDescriptions: Map[String, String],
-    endpoints: Seq[Meta],
+    routeMeta: RouteMeta,
     introspector: Introspector = Introspector
   ): String = {
-    val endpointsByTag = endpoints.groupBy(_.tags.headOption.getOrElse("")).map {
+    val endpointsByTag = routeMeta.endpointMetas.groupBy(_.tags.headOption.getOrElse("")).map {
       case (tag, ops) =>
         val methodOrder = Seq(MetaMethod.GET, MetaMethod.POST, MetaMethod.PUT, MetaMethod.PATCH, MetaMethod.DELETE).zipWithIndex.toMap
         (tag, ops.sortBy(op =>
@@ -61,7 +62,7 @@ object HtmlDocs {
           ${head}
           ${ops.mkString("\n")}
           <h2>Known types</h2>
-          ${knownTypes(endpoints, introspector)}
+          ${knownTypes(routeMeta.endpointMetas, introspector)}
         </div>
       $scripts
       </body>

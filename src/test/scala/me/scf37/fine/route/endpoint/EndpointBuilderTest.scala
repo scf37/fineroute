@@ -6,11 +6,11 @@ import me.scf37.fine.route.RouteBadQueryParameterException
 import me.scf37.fine.route.RouteNoPathParameterException
 import me.scf37.fine.route.RouteNoQueryParameterException
 import me.scf37.fine.route.endpoint
-import me.scf37.fine.route.meta.Meta
-import me.scf37.fine.route.meta.MetaMethod
-import me.scf37.fine.route.meta.MetaResultCode
-import me.scf37.fine.route.meta.MultiMetaParameter
-import me.scf37.fine.route.meta.SingleMetaParameter
+import me.scf37.fine.route.endpoint.meta.Meta
+import me.scf37.fine.route.endpoint.meta.MetaMethod
+import me.scf37.fine.route.endpoint.meta.MetaResultCode
+import me.scf37.fine.route.endpoint.meta.MultiMetaParameter
+import me.scf37.fine.route.endpoint.meta.SingleMetaParameter
 import me.scf37.fine.route.model.Params
 import me.scf37.fine.route.model.Request
 import me.scf37.fine.route.model.RequestBody1
