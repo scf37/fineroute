@@ -1,0 +1,5 @@
+- tagDescription declarations
+- produces[String]("text/html") - dont serialize is to json string...
+- produces/consumes[List[...]] - what description will be used?
+- produces/consumes stuff but route must work with bare request/response, may be allow request/response filters?
+- make route of single endpoint w/o implementing stuff or using builder?

@@ -42,24 +42,24 @@ class RouteTest extends FreeSpec {
   }
 
   "params are working" in {
-    assert(r(Request("", "/hello/Scala")).get.data == "Hello, Scala!")
-    assert(r(Request("", "/hello/Scala/")).get.data == "Hello, Scala!")
-    assert(r(Request("", "/hello/Scala?adj1=unused")).get.data == "Hello, Scala!")
-    assert(r(Request("", "/hello/World?adj=beautiful")).get.data == "Hello, beautiful World!")
+    assert(r.get(Request("", "/hello/Scala")).data == "Hello, Scala!")
+    assert(r.get(Request("", "/hello/Scala/")).data == "Hello, Scala!")
+    assert(r.get(Request("", "/hello/Scala?adj1=unused")).data == "Hello, Scala!")
+    assert(r.get(Request("", "/hello/World?adj=beautiful")).data == "Hello, beautiful World!")
 
     assertThrows[RouteUnmatchedException.type] {
-      r(Request("", "/hello/")).get
+      r.get(Request("", "/hello/"))
     }
     assertThrows[RouteUnmatchedException.type] {
-      r(Request("", "/hello")).get
+      r.get(Request("", "/hello"))
     }
     assertThrows[RouteUnmatchedException.type] {
-      r(Request("", "/hello/Scala/1")).get
+      r.get(Request("", "/hello/Scala/1"))
     }
   }
 
-  implicit class RouteResponseHelper[A](f: Either[Throwable, () => Either[Throwable, A]]) {
-    def get: A = f.fold(throw _, _().fold(throw _ , identity))
+  implicit class RouteResponseHelper(r: EitherRoute) {
+    def get(req: Request): Response = r(req).fold(throw _, _(req).fold(throw _, identity))
   }
 
 }

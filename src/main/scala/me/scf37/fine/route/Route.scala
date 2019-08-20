@@ -42,7 +42,7 @@ import me.scf37.fine.route.typeclass.RouteHttpResponse
  * @tparam Req Route HTTP request type, must be RouteHttpRequest
  * @tparam Resp Route HTTP response type, must be RouteHttpResponse
  */
-trait Route[F[_], Req, Resp] extends (Req => F[() => F[Resp]]) {
+trait Route[F[_], Req, Resp] extends (Req => F[Req => F[Resp]]) {
   /** MonadError instance for F, implement it
     *
     * It is important to implement it as def, not as val to avoid NPEs due to val initialization order
@@ -79,9 +79,9 @@ trait Route[F[_], Req, Resp] extends (Req => F[() => F[Resp]]) {
    * @throws RouteUnmatchedException if there is no endpoint for this request
    * @throws RouteParamParseException if path/query params conversion failed
    */
-  override def apply(req: Req): F[() => F[Resp]] = {
+  override def apply(req: Req): F[Req => F[Resp]] = {
     matcher.matchRequest(req).map {
-      case (req, endpoint) => () => endpoint.handle(req)
+      case (mreq, endpoint) => req2 => endpoint.handle(mreq.copy(req = req2))
     }
   }
 
@@ -143,6 +143,24 @@ trait Route[F[_], Req, Resp] extends (Req => F[() => F[Resp]]) {
    */
   def compose[Req2: RouteHttpRequest, Resp2: RouteHttpResponse](filter: (Req => F[Resp]) => (Req2 => F[Resp2])) =
     Route.mk(matcher.endpoints.map(e => e.compose(filter)): _*)
+
+  /**
+   * Compose two routes sequentially, i.e. run first route, then run second if first fails.
+   *
+   * It allows combining routes with conflicting paths but has worse performance
+   *
+   * @param r
+   * @return
+   */
+  def andThen(r: DumbRoute[F, Req, Resp]): DumbRoute[F, Req, Resp] =
+    dumb.andThen(r)
+
+  /**
+   * Convert this route to DumbRoute
+   *
+   * @return DumbRoute with the same endpoints as this route
+   */
+  def dumb: DumbRoute[F, Req, Resp] = DumbRoute.mk(meta)(this)
 
   private def addEndpoint(e: Endpoint[F, Req, Resp]): Unit = {
     matcher = matcher.addEndpoint(e)
