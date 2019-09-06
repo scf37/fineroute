@@ -28,7 +28,7 @@ case class Endpoint[F[_], Req, Resp](
     copy(handle = req => handle(req).map(f))
 
   /** map endpoint request */
-  def local[Req2](f: Req2 => Req): Endpoint[F, Req2, Resp] =
+  def rmap[Req2](f: Req2 => Req): Endpoint[F, Req2, Resp] =
     copy(handle = req => handle(req.map(f)))
 
   /** map endpoint effect */

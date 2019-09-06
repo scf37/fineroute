@@ -10,7 +10,9 @@ import me.scf37.fine.route.endpoint.meta.Meta
   */
 case class RouteMeta(
   endpointMetas: Seq[Meta]
-)
+) {
+  def ++(other: RouteMeta): RouteMeta = RouteMeta(endpointMetas ++ other.endpointMetas)
+}
 
 object RouteMeta {
   implicit val monoidInstance = new Monoid[RouteMeta] {

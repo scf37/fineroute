@@ -1,13 +1,10 @@
 package me.scf37.fine.route.matcher
 
-import cats.Monad
-import cats.MonadError
 import cats.implicits._
-import me.scf37.fine.route.RouteUnmatchedException
+import cats.{Monad, MonadError, ~>}
 import me.scf37.fine.route.endpoint.Endpoint
-import me.scf37.fine.route.endpoint.MatchedRequest
 import me.scf37.fine.route.endpoint.meta.MetaMethod
-import me.scf37.fine.route.typeclass.RouteHttpRequest
+import me.scf37.fine.route.{RouteRequest, RouteUnmatchedException}
 
 /**
  * Matcher - efficiently matches request against set of endpoints
@@ -17,7 +14,7 @@ import me.scf37.fine.route.typeclass.RouteHttpRequest
  * @tparam Req HTTP request
  * @tparam Resp HTTP response
  */
-case class Matcher[F[_]: MonadError[?[_], Throwable], Req: RouteHttpRequest, Resp](
+case class Matcher[F[_]: MonadError[?[_], Throwable], Req, Resp](
   private val roots: Map[MetaMethod, PathNode[Endpoint[F, Req, Resp]]] = Map.empty[MetaMethod, PathNode[Endpoint[F, Req, Resp]]]
 ) {
 
@@ -41,9 +38,24 @@ case class Matcher[F[_]: MonadError[?[_], Throwable], Req: RouteHttpRequest, Res
    * @param m
    * @return
    */
-  def addMatcher(m: Matcher[F, Req, Resp]): Matcher[F, Req, Resp] = {
+  def combine(m: Matcher[F, Req, Resp]): Matcher[F, Req, Resp] = {
     copy(roots = roots.combine(m.roots))
   }
+
+  def map[Resp2](f: Resp => Resp2): Matcher[F, Req, Resp2] = {
+    Matcher.mk(endpoints.map(e => e.map(f)):_*)
+  }
+
+  def rmap[Req2](f: Req2 => Req): Matcher[F, Req2, Resp] = {
+    Matcher.mk(endpoints.map(e => e.rmap(f)):_*)
+  }
+
+  def mapK[G[_]: MonadError[?[_], Throwable]](f: F ~> G): Matcher[G, Req, Resp] = {
+    Matcher.mk(endpoints.map(e => e.mapK(f)):_*)
+  }
+
+  def compose[Req2, Resp2](filter: (Req => F[Resp]) => (Req2 => F[Resp2])) =
+    Matcher.mk(endpoints.map(e => e.compose(filter)):_*)
 
   /**
    * Find endpoint by request
@@ -51,14 +63,13 @@ case class Matcher[F[_]: MonadError[?[_], Throwable], Req: RouteHttpRequest, Res
    * @param req HTTP request
    * @return matched request and endpoint or `RouteUnmatchedException`
    */
-  def matchRequest(req: Req): F[(MatchedRequest[Req], Endpoint[F, Req, Resp])] = {
-    val method = RouteHttpRequest[Req].method(req)
+  def matchRequest(req: RouteRequest): F[Matched[Endpoint[F, Req, Resp]]] = {
 
-    roots.get(method) match {
+    roots.get(req.method) match {
       case None => MonadError[F, Throwable].raiseError(RouteUnmatchedException)
 
       case Some(pathNode) =>
-        val url = RouteHttpRequest[Req].url(req)
+        val url = req.url
         if (url.isEmpty)
           MonadError[F, Throwable].raiseError(RouteUnmatchedException)
         else
@@ -66,8 +77,8 @@ case class Matcher[F[_]: MonadError[?[_], Throwable], Req: RouteHttpRequest, Res
             case None => MonadError[F, Throwable].raiseError(RouteUnmatchedException)
 
             case Some(matched) =>
-              Monad[F].pure(
-                makeRequest(req, matched.unmatched.mkString("/"), matched.params.toMap, matched.value) -> matched.value
+              Monad[F].pure(matched
+                //makeRequest(req, matched.unmatched.mkString("/"), matched.params.toMap, matched.value) -> matched.value
               )
           }
     }
@@ -91,20 +102,10 @@ case class Matcher[F[_]: MonadError[?[_], Throwable], Req: RouteHttpRequest, Res
     path.substring(1, i + 1).split("/").toList
   }
 
-  private def makeRequest(
-    req: Req,
-    unmatchedPath: String,
-    pathParams: Map[String, String],
-    e: Endpoint[F, Req, Resp]
-  ) = {
-    MatchedRequest[Req](
-      req = req,
-      url = RouteHttpRequest[Req].url(req),
-      meta = e.meta,
-      unmatchedPath = unmatchedPath,
-      pathParams = pathParams,
-      queryParams = RouteHttpRequest[Req].queryParams(req),
-      body = RouteHttpRequest[Req].body(req)
-    )
-  }
+
+}
+
+object Matcher {
+  def mk[F[_]: MonadError[?[_], Throwable], Req, Resp](endpoints: Endpoint[F, Req, Resp]*): Matcher[F, Req, Resp] =
+    endpoints.foldLeft(Matcher[F, Req, Resp]())((m, e) => m.addEndpoint(e))
 }

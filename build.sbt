@@ -29,7 +29,8 @@ lazy val fineroute = project.in(file("."))
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.typelevel" %% "cats-effect" % "1.3.1"
+      "org.typelevel" %% "cats-effect" % "1.3.1",
+      "com.softwaremill.tapir" %% "tapir-core" % "0.10.1"
     ),
     testDeps,
     commonSettings

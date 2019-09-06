@@ -1,8 +1,10 @@
 package me.scf37.fine.route.docs
 
+import java.nio.file.{Files, Paths}
+
 import cats.MonadError
 import cats.implicits._
-import me.scf37.fine.route.Route
+import me.scf37.fine.route.{Route, RouteBuilder}
 import me.scf37.fine.route.model.Request
 import me.scf37.fine.route.model.Response
 import me.scf37.fine.route.typeclass.RequestBody
@@ -74,7 +76,7 @@ object Params {
 }
 
 class HtmlDocsTest extends FreeSpec {
-  trait EitherRoute extends Route[Either[Throwable, ?], Request, Response] {
+  trait EitherRoute extends RouteBuilder[Either[Throwable, ?], Request, Response] {
     override protected def monadError: MonadError[Either[Throwable, ?], Throwable] = implicitly[MonadError[Either[Throwable, ?], Throwable]]
     override protected def routeHttpRequest: RouteHttpRequest[Request] = implicitly[RouteHttpRequest[Request]]
     override protected def routeHttpResponse: RouteHttpResponse[Response] = implicitly[RouteHttpResponse[Response]]
@@ -130,7 +132,7 @@ class HtmlDocsTest extends FreeSpec {
       .consumes[TestBody]
       .produces[TestBody]
       .delete("/e2/delete")((a, b) => ???)
-  }
+  }.build()
 
   "write route docs" in {
     HtmlDocs.generateHtml("<h1>Hello</h1>", Map("tag1" -> "tag1 description", "tag2" -> "tag2 description"), r.meta)
