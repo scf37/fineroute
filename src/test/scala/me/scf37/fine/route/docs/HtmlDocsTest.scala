@@ -4,14 +4,9 @@ import java.nio.file.{Files, Paths}
 
 import cats.MonadError
 import cats.implicits._
-import me.scf37.fine.route.{Route, RouteBuilder}
-import me.scf37.fine.route.model.Request
-import me.scf37.fine.route.model.Response
-import me.scf37.fine.route.typeclass.RequestBody
-import me.scf37.fine.route.typeclass.RequestParams
-import me.scf37.fine.route.typeclass.ResponseBody
-import me.scf37.fine.route.typeclass.RouteHttpRequest
-import me.scf37.fine.route.typeclass.RouteHttpResponse
+import me.scf37.fine.route.RouteBuilder
+import me.scf37.fine.route.model.{Request, Response}
+import me.scf37.fine.route.typeclass._
 import org.scalatest.FreeSpec
 
 @Description("this is test body, suited both for request and response bodies")
@@ -135,8 +130,8 @@ class HtmlDocsTest extends FreeSpec {
   }.build()
 
   "write route docs" in {
-    HtmlDocs.generateHtml("<h1>Hello</h1>", Map("tag1" -> "tag1 description", "tag2" -> "tag2 description"), r.meta)
-    //Files.write(Paths.get("1.html"), html.getBytes("utf-8"))
+    val html = HtmlDocs.generateHtml("<h1>Hello</h1>", Map("tag1" -> "tag1 description", "tag2" -> "tag2 description"), r.meta)
+    Files.write(Paths.get("1.html"), html.getBytes("utf-8"))
   }
 
 

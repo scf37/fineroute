@@ -8,32 +8,11 @@ import me.scf37.fine.route.matcher.Matcher
 import me.scf37.fine.route.typeclass.RouteHttpRequest
 
 /**
- * Route - return request handler by request, where request handler is `() => F[Resp]`.
+ * Route - return request handler by request, where request handler is `Req => F[Resp]`.
  * It is generic (any request/response type, any MonadError effect), efficient (O(ln(n)) matching speed)
  * and composable.
  *
- * Using Route with specific effect and web framework.
- *
- * Recommended approach is to create specific trait extending Route and providing required typeclasses:
- * trait AkkaFutureRoute extends Route[Future, Request, Response] {
- *   override protected def monadError ...
- *   override protected def routeHttpRequest ...
- *   override protected def routeHttpResponse ...
- * }
- *
- * Building routes.
- *
- * 1. Using endpoint DSL
- * trait MyRoute extends AkkaFutureRoute {
- *   endpoint.get("/") { () => ... }
- *   endpoint.consumes[LoginRequest].post("/login") { loginRequest => ... }
- * }
- * 2. Composing routes
- * - trait TotalRoute extends MyRoute with AnotherRoute
- * - myRoute.andThen(otherRoute)
- * - cats.Monoid instance
- * 3. Building routes manually
- * Route.mk(Endpoint(...), Endpoint(...))
+ * See RouteBuilder and Route.mk methods
  *
  * @tparam F Route effect, must be MonadError[?[_], Throwable]
  * @tparam Req Route HTTP request type, must be RouteHttpRequest
@@ -217,7 +196,7 @@ object Route {
     }
 
     override def compose0[Req2, Resp2](filter: (RouteRequest => F[Req => F[Resp]]) => (RouteRequest => F[Req2 => F[Resp2]])): Route[F, Req2, Resp2] = {
-      Route.mk(meta)(filter(this))
+      Route.mk(filterMeta(filter, meta))(filter(this))
     }
 
     private def makeRequest(
@@ -247,19 +226,19 @@ object Route {
 
     override def combine(r: Route[F, Req, Resp]): Route[F, Req, Resp] = andThen(r)
 
-    override def map[Resp2](f: Resp => Resp2): Route[F, Req, Resp2] = Route.mk(meta) { req =>
+    override def map[Resp2](f: Resp => Resp2): Route[F, Req, Resp2] = Route.mk(filterMeta(f, meta)) { req =>
       this.apply(req).map(h => req2 => h(req2).map(f))
     }
 
-    override def rmap[Req2: RouteHttpRequest](f: Req2 => Req): Route[F, Req2, Resp] = Route.mk(meta) { req =>
+    override def rmap[Req2: RouteHttpRequest](f: Req2 => Req): Route[F, Req2, Resp] = Route.mk(filterMeta(f, meta)) { req =>
       this.apply(req).map(h => req2 => h(f(req2)))
     }
 
-    override def mapK[G[_] : MonadError[?[_], Throwable]](f: F ~> G): Route[G, Req, Resp] = Route.mk(meta) { req =>
+    override def mapK[G[_] : MonadError[?[_], Throwable]](f: F ~> G): Route[G, Req, Resp] = Route.mk(filterMeta(f, meta)) { req =>
       f(this.apply(req).map(h => req2 => f(h(req2))))
     }
 
-    override def compose[Req2: RouteHttpRequest, Resp2](filter: (Req => F[Resp]) => Req2 => F[Resp2]): Unit = Route.mk(meta) { req =>
+    override def compose[Req2: RouteHttpRequest, Resp2](filter: (Req => F[Resp]) => Req2 => F[Resp2]): Unit = Route.mk(filterMeta(filter, meta)) { req =>
       this.apply(req).map(filter)
     }
 
@@ -271,8 +250,13 @@ object Route {
     }
 
     override def compose0[Req2, Resp2](filter: (RouteRequest => F[Req => F[Resp]]) => (RouteRequest => F[Req2 => F[Resp2]])): Route[F, Req2, Resp2] = {
-      Route.mk(meta)(filter(this))
+      Route.mk(filterMeta(filter, meta))(filter(this))
     }
-
   }
+
+  private def filterMeta(filter: Any, meta: RouteMeta): RouteMeta = filter match {
+    case f: MetaFilter => meta.copy(endpointMetas = meta.endpointMetas.map(f.filterMeta))
+    case _ => meta
+  }
+
 }

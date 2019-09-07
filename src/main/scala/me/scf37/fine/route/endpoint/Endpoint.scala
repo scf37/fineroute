@@ -8,6 +8,7 @@ import me.scf37.fine.route.endpoint.meta.Meta
 import me.scf37.fine.route.typeclass.RouteHttpResponse
 import cats.implicits._
 import cats.~>
+import me.scf37.fine.route.MetaFilter
 
 /**
  * Route endpoint - handler plus meta information
@@ -25,20 +26,25 @@ case class Endpoint[F[_], Req, Resp](
 
   /** map endpoint response */
   def map[Resp2](f: Resp => Resp2)(implicit M: Monad[F]): Endpoint[F, Req, Resp2] =
-    copy(handle = req => handle(req).map(f))
+    copy(handle = req => handle(req).map(f), meta = filterMeta(f))
 
   /** map endpoint request */
   def rmap[Req2](f: Req2 => Req): Endpoint[F, Req2, Resp] =
-    copy(handle = req => handle(req.map(f)))
+    copy(handle = req => handle(req.map(f)), meta = filterMeta(f))
 
   /** map endpoint effect */
-  def mapK[G[_]](f: F ~> G): Endpoint[G, Req, Resp] = copy(handle = req => f(handle(req)))
+  def mapK[G[_]](f: F ~> G): Endpoint[G, Req, Resp] = copy(handle = req => f(handle(req)), meta = filterMeta(f))
 
   /** Wrap this endpoint with filter.  */
   def compose[Req2, Resp2](filter: (Req => F[Resp]) => (Req2 => F[Resp2])): Endpoint[F, Req2, Resp2] =
     copy(handle = req => {
       filter((r: Req) => handle(req.copy(req = r))).apply(req.req)
-    })
+    }, meta = filterMeta(filter))
+
+  private def filterMeta(filter: Any): Meta = filter match {
+    case f: MetaFilter => f.filterMeta(meta)
+    case _ => meta
+  }
 }
 
 object Endpoint {
