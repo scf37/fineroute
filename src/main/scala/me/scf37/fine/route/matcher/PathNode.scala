@@ -57,6 +57,11 @@ sealed trait PathNode[V] {
    * @return all values from this tree
    */
   def values: List[V]
+
+  /**
+   * map PathNode value
+   */
+  def map[VV](f: V => VV): PathNode[VV]
 }
 
 object PathNode {
@@ -118,6 +123,11 @@ case class PlainPathNode[V](
   }
 
   override def values: List[V] = value.fold[List[V]](Nil)(List(_)) ::: children.values.flatMap(_.values).toList
+
+  override def map[VV](f: V => VV): PathNode[VV] = copy(
+    value = value.map(f),
+    children = children.map(kv => kv._1 -> kv._2.map(f))
+  )
 }
 
 // represents path with /{var} child
@@ -171,6 +181,11 @@ case class VarPathNode[V](
   }
 
   override def values: List[V] = value.fold[List[V]](Nil)(List(_)) ::: node.values
+
+  override def map[VV](f: V => VV): PathNode[VV] = copy(
+    value = value.map(f),
+    node = node.map(f)
+  )
 }
 
 // represents path with star child
@@ -199,6 +214,10 @@ case class StarPathNode[V](
   override val value: Option[V] = Some(value0)
 
   override def values: List[V] = List(value0)
+
+  override def map[VV](f: V => VV): PathNode[VV] = copy(
+    value0 = f(value0)
+  )
 }
 
 // represents empty path without children
@@ -237,4 +256,8 @@ case class EmptyPathNode[V](value: Option[V] = None) extends PathNode[V] {
   }
 
   override def values: List[V] = value.toList
+
+  override def map[VV](f: V => VV): PathNode[VV] = copy(
+    value = value.map(f)
+  )
 }

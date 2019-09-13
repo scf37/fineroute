@@ -10,7 +10,7 @@ import me.scf37.fine.route.typeclass.RouteHttpResponse
 import org.scalatest.FreeSpec
 
 class RouteTest extends FreeSpec {
-  trait EitherRoute extends RouteBuilder[Either[Throwable, ?], Request, Response] {
+  trait EitherRoute extends RouteDsl[Either[Throwable, ?], Request, Response] {
     override protected def monadError: MonadError[Either[Throwable, ?], Throwable] = implicitly[MonadError[Either[Throwable, ?], Throwable]]
     override protected def routeHttpRequest: RouteHttpRequest[Request] = implicitly[RouteHttpRequest[Request]]
     override protected def routeHttpResponse: RouteHttpResponse[Response] = implicitly[RouteHttpResponse[Response]]
@@ -36,7 +36,7 @@ class RouteTest extends FreeSpec {
       .get("/hello/{name}") { (name, adj) =>
         Right(Response(s"Hello, ${adj.fold("")(_ + " ")}${name}!", ""))
       }
-  }.build()
+  }
 
   "route meta is present" in {
     assert(r.meta.endpointMetas.length == 3)
@@ -60,7 +60,7 @@ class RouteTest extends FreeSpec {
   }
 
   implicit class RouteResponseHelper(r: Route[Either[Throwable, ?], Request, Response]) {
-    def get(req: Request): Response = r(RouteRequest(MetaMethod.GET, req.url)).fold(throw _, _(req).fold(throw _, identity))
+    def get(req: Request): Response = r(RouteRequest(MetaMethod.GET, req.url)).fold(throw RouteUnmatchedException)(_(req).fold(throw _, identity))
   }
 
 }

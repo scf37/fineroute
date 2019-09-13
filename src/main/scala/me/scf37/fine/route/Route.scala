@@ -2,7 +2,8 @@ package me.scf37.fine.route
 
 import cats.implicits._
 import cats.kernel.CommutativeMonoid
-import cats.{MonadError, ~>}
+import cats.{Functor, ~>}
+import me.scf37.fine.route.endpoint.meta.Meta
 import me.scf37.fine.route.endpoint.{Endpoint, MatchedRequest}
 import me.scf37.fine.route.matcher.Matcher
 import me.scf37.fine.route.typeclass.RouteHttpRequest
@@ -12,15 +13,15 @@ import me.scf37.fine.route.typeclass.RouteHttpRequest
  * It is generic (any request/response type, any MonadError effect), efficient (O(ln(n)) matching speed)
  * and composable.
  *
- * See RouteBuilder and Route.mk methods
+ * See RouteDsl and Route.mk methods
  *
  * @tparam F Route effect, must be MonadError[?[_], Throwable]
  * @tparam Req Route HTTP request type, must be RouteHttpRequest
  * @tparam Resp Route HTTP response type, must be RouteHttpResponse
  */
-sealed trait Route[F[_], Req, Resp] extends (RouteRequest => F[Req => F[Resp]]) {
+trait Route[F[_], Req, Resp] extends (RouteRequest => Option[Req => F[Resp]]) {
    /** meta information on route endpoints, used to generate docs and clients */
-  def meta: RouteMeta// = RouteMeta(matcher.endpoints.map(_.meta))
+  def meta: RouteMeta
 
   /**
    * Look up handler by request
@@ -30,7 +31,7 @@ sealed trait Route[F[_], Req, Resp] extends (RouteRequest => F[Req => F[Resp]]) 
    * @throws RouteUnmatchedException if there is no endpoint for this request
    * @throws RouteParamParseException if path/query params conversion failed
    */
-  override def apply(req: RouteRequest): F[Req => F[Resp]]
+  override def apply(req: RouteRequest): Option[Req => F[Resp]]
 
   /**
    * Combine two routes
@@ -64,7 +65,7 @@ sealed trait Route[F[_], Req, Resp] extends (RouteRequest => F[Req => F[Resp]]) 
    * @tparam G new route effect
    * @return new route with the same endpoints but different effect type
    */
-  def mapK[G[_]: MonadError[?[_], Throwable]](f: F ~> G): Route[G, Req, Resp]
+  def mapK[G[_]: Functor](f: F ~> G): Route[G, Req, Resp]
 
   /**
    * Wrap this route with filter. Filter is executed after matching but before endpoint handler
@@ -76,7 +77,7 @@ sealed trait Route[F[_], Req, Resp] extends (RouteRequest => F[Req => F[Resp]]) 
    * @tparam Resp2 new response type
    * @return route that wraps endpoint handlers with this filter
    */
-  def compose[Req2: RouteHttpRequest, Resp2](filter: (Req => F[Resp]) => (Req2 => F[Resp2]))
+  def compose[Req2: RouteHttpRequest, Resp2](filter: (Req => F[Resp]) => (Req2 => F[Resp2])): Route[F, Req2, Resp2]
 
   /**
    * Compose two routes sequentially, i.e. run first route, then run second if first fails.
@@ -88,7 +89,13 @@ sealed trait Route[F[_], Req, Resp] extends (RouteRequest => F[Req => F[Resp]]) 
    */
   def andThen(r: Route[F, Req, Resp]): Route[F, Req, Resp]
 
-  def compose0[Req2, Resp2](filter: (RouteRequest => F[Req => F[Resp]]) => (RouteRequest => F[Req2 => F[Resp2]])): Route[F, Req2, Resp2]
+  def compose0[Req2, Resp2](filter: (RouteRequest => Option[Req => F[Resp]]) => (RouteRequest => Option[Req2 => F[Resp2]])): Route[F, Req2, Resp2]
+
+  def handleUnmatched(f: Req => F[Resp]): Route[F, Req, Resp]
+}
+
+trait CombinableRoute[F[_], Req, Resp] {
+  protected[route] def matcher: Matcher[Endpoint[F, Req, Resp]]
 }
 
 object Route {
@@ -101,8 +108,8 @@ object Route {
    * @tparam Resp Route HTTP response type
    * @return empty route
    */
-  def empty[F[_]: MonadError[?[_], Throwable], Req: RouteHttpRequest, Resp]: Route[F, Req, Resp] =
-    RouteImpl(Nil)
+  def empty[F[_]: Functor, Req: RouteHttpRequest, Resp]: Route[F, Req, Resp] =
+    RouteImpl(Matcher())
 
   /**
    * Make route out of set of Endpoint instances
@@ -113,16 +120,16 @@ object Route {
    * @tparam Resp Route HTTP response type
    * @return route
    */
-  def mk[F[_]: MonadError[?[_], Throwable], Req: RouteHttpRequest, Resp](endpoints: Endpoint[F, Req, Resp]*): Route[F, Req, Resp] = {
-    RouteImpl(List(Matcher.mk(endpoints: _*)))
+  def mk[F[_]: Functor, Req: RouteHttpRequest, Resp](endpoints: Endpoint[F, Req, Resp]*): Route[F, Req, Resp] = {
+    RouteImpl(endpoints.foldLeft(Matcher[Endpoint[F, Req, Resp]]())((m, e) => m.addEndpoint(e.meta.method, e.meta.pathPattern, e)))
   }
 
-  def mk[F[_]: MonadError[?[_], Throwable], Req, Resp](meta: RouteMeta)(f: RouteRequest => F[Req => F[Resp]]): Route[F, Req, Resp] = {
+  def mk[F[_]: Functor, Req, Resp](meta: RouteMeta)(f: RouteRequest => Option[Req => F[Resp]]): Route[F, Req, Resp] = {
     DumbRoute(meta, f)
   }
 
   /** CommutativeMonoid for Route */
-  implicit def monoidInstance[F[_]: MonadError[?[_], Throwable], Req: RouteHttpRequest, Resp]: CommutativeMonoid[Route[F, Req, Resp]] = new CommutativeMonoid[Route[F, Req, Resp]] {
+  implicit def monoidInstance[F[_]: Functor, Req: RouteHttpRequest, Resp]: CommutativeMonoid[Route[F, Req, Resp]] = new CommutativeMonoid[Route[F, Req, Resp]] {
     override def empty: Route[F, Req, Resp] = Route.empty
 
     override def combine(x: Route[F, Req, Resp], y: Route[F, Req, Resp]): Route[F, Req, Resp] = {
@@ -130,74 +137,57 @@ object Route {
     }
   }
 
-  private case class RouteImpl[F[_]: MonadError[?[_], Throwable], Req: RouteHttpRequest, Resp](
-    matchers: List[Matcher[F, Req, Resp]]
-  ) extends Route[F, Req, Resp] {
+  // implementation supporting O(log(n)) matching
+  private case class RouteImpl[F[_]: Functor, Req: RouteHttpRequest, Resp](
+    matcher: Matcher[Endpoint[F, Req, Resp]]
+  ) extends Route[F, Req, Resp] with CombinableRoute[F, Req, Resp]{
 
-    override def meta: RouteMeta = RouteMeta(matchers.flatMap(matcher => matcher.endpoints.map(_.meta)))
+    override def meta: RouteMeta = RouteMeta(matcher.endpoints.map(_.meta))
 
-    override def apply(req: RouteRequest): F[Req => F[Resp]] = {
-
-      def loop(matchers: List[Matcher[F, Req, Resp]]): F[Req => F[Resp]] = matchers match {
-
-        case Nil => MonadError[F, Throwable].raiseError(RouteUnmatchedException)
-
-        case m :: tail =>
-          m.matchRequest(req).map {
-            case (mreq) => (req2: Req) => mreq.value.handle(
+    override def apply(req: RouteRequest): Option[Req => F[Resp]] =
+      matcher.matchRequest(req.method, req.uri) match {
+        case Some(mreq) =>
+          Some { (req2: Req) =>
+            mreq.value.handle(
               makeRequest(req2, mreq.unmatched.mkString("/"), mreq.params.toMap, mreq.value)
             )
-          }.handleErrorWith {
-            case RouteUnmatchedException => loop(tail)
-            case e => MonadError[F, Throwable].raiseError(e)
-          }
-      }
-
-      loop(matchers)
-    }
-
-    override def combine(r: Route[F, Req, Resp]): Route[F, Req, Resp] = {
-      r match {
-
-        case r: RouteImpl[F, Req, Resp] =>
-          val matchers = this.matchers.map(Option.apply).zipAll(r.matchers.map(Option.apply), None, None).map {
-
-            case (Some(m1), Some(m2)) => m1.combine(m2)
-
-            case (m1Opt, m2Opt) => m1Opt.orElse(m2Opt).get
           }
 
-          RouteImpl(matchers)
-
-        case _ => r.combine(this)
-      }
-
+        case None => None
     }
 
-    override def map[Resp2](f: Resp => Resp2): Route[F, Req, Resp2] = {
-      RouteImpl(matchers.map(_.map(f)))
-    }
-
-    override def rmap[Req2: RouteHttpRequest](f: Req2 => Req): Route[F, Req2, Resp] = {
-      RouteImpl(matchers.map(_.rmap(f)))
-    }
-
-    override def mapK[G[_]: MonadError[?[_], Throwable]](f: F ~> G): Route[G, Req, Resp] =
-      RouteImpl(matchers.map(_.mapK(f)))
-
-    override def compose[Req2: RouteHttpRequest, Resp2](filter: (Req => F[Resp]) => (Req2 => F[Resp2])) =
-      RouteImpl(matchers.map(_.compose(filter)))
-
-    override def andThen(r: Route[F, Req, Resp]): Route[F, Req, Resp] = r match {
-      case r: RouteImpl[F, Req, Resp] =>
-        RouteImpl(matchers ++ r.matchers)
+    override def combine(r: Route[F, Req, Resp]): Route[F, Req, Resp] = r match {
+      case r: CombinableRoute[F, Req, Resp] =>
+        copy(matcher = matcher combine r.matcher)
 
       case _ => r.andThen(this)
     }
 
-    override def compose0[Req2, Resp2](filter: (RouteRequest => F[Req => F[Resp]]) => (RouteRequest => F[Req2 => F[Resp2]])): Route[F, Req2, Resp2] = {
-      Route.mk(filterMeta(filter, meta))(filter(this))
+    override def map[Resp2](f: Resp => Resp2): Route[F, Req, Resp2] =
+      copy(matcher = matcher.map(e => e.map(f).copy(meta = filterMeta(f, e.meta))))
+
+    override def rmap[Req2: RouteHttpRequest](f: Req2 => Req): Route[F, Req2, Resp] =
+      copy(matcher = matcher.map(e => e.rmap(f).copy(meta = filterMeta(f, e.meta))))
+
+    override def mapK[G[_]: Functor](f: F ~> G): Route[G, Req, Resp] =
+      RouteImpl(matcher.map(e => e.mapK(f).copy(meta = filterMeta(f, e.meta))))
+
+    override def compose[Req2: RouteHttpRequest, Resp2](filter: (Req => F[Resp]) => (Req2 => F[Resp2])): Route[F, Req2, Resp2] =
+      copy(matcher = matcher.map(e => e.compose(filter).copy(meta = filterMeta(filter, e.meta))))
+
+    override def andThen(r: Route[F, Req, Resp]): Route[F, Req, Resp] = r match {
+      case r: CombinableRoute[F, Req, Resp] =>
+        copy(matcher = matcher andThen r.matcher)
+
+      case _ => r.andThen(this)
     }
+
+    override def compose0[Req2, Resp2](filter: (RouteRequest => Option[Req => F[Resp]]) => (RouteRequest => Option[Req2 => F[Resp2]])): Route[F, Req2, Resp2] = {
+      Route.mk(filterRouteMeta(filter, meta))(filter(this))
+    }
+
+    override def handleUnmatched(f: Req => F[Resp]): Route[F, Req, Resp] =
+      Route.mk(meta)(this).handleUnmatched(f)
 
     private def makeRequest(
       req: Req,
@@ -217,44 +207,51 @@ object Route {
     }
   }
 
-  private case class DumbRoute[F[_]: MonadError[?[_], Throwable], Req, Resp](
+  // implementation supporting linear search only
+  private case class DumbRoute[F[_]: Functor, Req, Resp](
     meta: RouteMeta,
-    handler: RouteRequest => F[Req => F[Resp]]
+    handler: RouteRequest => Option[Req => F[Resp]]
   ) extends Route[F, Req, Resp] {
 
-    override def apply(req: RouteRequest): F[Req => F[Resp]] = handler(req)
+    override def apply(req: RouteRequest): Option[Req => F[Resp]] = handler(req)
 
     override def combine(r: Route[F, Req, Resp]): Route[F, Req, Resp] = andThen(r)
 
-    override def map[Resp2](f: Resp => Resp2): Route[F, Req, Resp2] = Route.mk(filterMeta(f, meta)) { req =>
+    override def map[Resp2](f: Resp => Resp2): Route[F, Req, Resp2] = Route.mk(filterRouteMeta(f, meta)) { req =>
       this.apply(req).map(h => req2 => h(req2).map(f))
     }
 
-    override def rmap[Req2: RouteHttpRequest](f: Req2 => Req): Route[F, Req2, Resp] = Route.mk(filterMeta(f, meta)) { req =>
+    override def rmap[Req2: RouteHttpRequest](f: Req2 => Req): Route[F, Req2, Resp] = Route.mk(filterRouteMeta(f, meta)) { req =>
       this.apply(req).map(h => req2 => h(f(req2)))
     }
 
-    override def mapK[G[_] : MonadError[?[_], Throwable]](f: F ~> G): Route[G, Req, Resp] = Route.mk(filterMeta(f, meta)) { req =>
-      f(this.apply(req).map(h => req2 => f(h(req2))))
+    override def mapK[G[_]: Functor](f: F ~> G): Route[G, Req, Resp] = Route.mk(filterRouteMeta(f, meta)) { req =>
+      this.apply(req).map(h => req2 => f(h(req2)))
     }
 
-    override def compose[Req2: RouteHttpRequest, Resp2](filter: (Req => F[Resp]) => Req2 => F[Resp2]): Unit = Route.mk(filterMeta(filter, meta)) { req =>
+    override def compose[Req2: RouteHttpRequest, Resp2](filter: (Req => F[Resp]) => Req2 => F[Resp2]): Route[F, Req2, Resp2] = Route.mk(filterRouteMeta(filter, meta)) { req =>
       this.apply(req).map(filter)
     }
 
     override def andThen(r: Route[F, Req, Resp]): Route[F, Req, Resp] = Route.mk(meta ++ r.meta) { req =>
-      this.apply(req).handleErrorWith {
-        case RouteUnmatchedException => r.apply(req)
-        case e => MonadError[F, Throwable].raiseError(e)
-      }
+      this.apply(req).orElse(r.apply(req))
     }
 
-    override def compose0[Req2, Resp2](filter: (RouteRequest => F[Req => F[Resp]]) => (RouteRequest => F[Req2 => F[Resp2]])): Route[F, Req2, Resp2] = {
-      Route.mk(filterMeta(filter, meta))(filter(this))
+    override def compose0[Req2, Resp2](filter: (RouteRequest => Option[Req => F[Resp]]) => (RouteRequest => Option[Req2 => F[Resp2]])): Route[F, Req2, Resp2] = {
+      Route.mk(filterRouteMeta(filter, meta))(filter(this))
+    }
+
+    override def handleUnmatched(f: Req => F[Resp]): Route[F, Req, Resp] = Route.mk(meta) { req =>
+      this.apply(req).orElse(Some(f))
     }
   }
 
-  private def filterMeta(filter: Any, meta: RouteMeta): RouteMeta = filter match {
+  private def filterMeta(filter: Any, meta: Meta): Meta = filter match {
+    case f: MetaFilter => f.filterMeta(meta)
+    case _ => meta
+  }
+
+  private def filterRouteMeta(filter: Any, meta: RouteMeta): RouteMeta = filter match {
     case f: MetaFilter => meta.copy(endpointMetas = meta.endpointMetas.map(f.filterMeta))
     case _ => meta
   }

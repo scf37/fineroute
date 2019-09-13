@@ -4,7 +4,7 @@ import java.nio.file.{Files, Paths}
 
 import cats.MonadError
 import cats.implicits._
-import me.scf37.fine.route.RouteBuilder
+import me.scf37.fine.route.RouteDsl
 import me.scf37.fine.route.model.{Request, Response}
 import me.scf37.fine.route.typeclass._
 import org.scalatest.FreeSpec
@@ -71,7 +71,7 @@ object Params {
 }
 
 class HtmlDocsTest extends FreeSpec {
-  trait EitherRoute extends RouteBuilder[Either[Throwable, ?], Request, Response] {
+  trait EitherRoute extends RouteDsl[Either[Throwable, ?], Request, Response] {
     override protected def monadError: MonadError[Either[Throwable, ?], Throwable] = implicitly[MonadError[Either[Throwable, ?], Throwable]]
     override protected def routeHttpRequest: RouteHttpRequest[Request] = implicitly[RouteHttpRequest[Request]]
     override protected def routeHttpResponse: RouteHttpResponse[Response] = implicitly[RouteHttpResponse[Response]]
@@ -127,7 +127,7 @@ class HtmlDocsTest extends FreeSpec {
       .consumes[TestBody]
       .produces[TestBody]
       .delete("/e2/delete")((a, b) => ???)
-  }.build()
+  }
 
   "write route docs" in {
     val html = HtmlDocs.generateHtml("<h1>Hello</h1>", Map("tag1" -> "tag1 description", "tag2" -> "tag2 description"), r.meta)

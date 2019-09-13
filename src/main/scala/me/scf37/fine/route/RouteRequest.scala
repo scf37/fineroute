@@ -7,5 +7,5 @@ case class RouteRequest(
   method: MetaMethod,
 
   /** request uri, with query part but without protocol. Should start with '/' */
-  url: String
+  uri: String
 )

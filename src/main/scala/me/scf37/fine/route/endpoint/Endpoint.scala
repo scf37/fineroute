@@ -1,14 +1,11 @@
 package me.scf37.fine.route.endpoint
 
-import cats.Applicative
-import cats.Monad
-import cats.MonadError
+import cats.implicits._
+import cats.{Applicative, Functor, MonadError, ~>}
+import me.scf37.fine.route.MetaFilter
 import me.scf37.fine.route.endpoint.impl.EndpointBuilder0
 import me.scf37.fine.route.endpoint.meta.Meta
 import me.scf37.fine.route.typeclass.RouteHttpResponse
-import cats.implicits._
-import cats.~>
-import me.scf37.fine.route.MetaFilter
 
 /**
  * Route endpoint - handler plus meta information
@@ -25,7 +22,7 @@ case class Endpoint[F[_], Req, Resp](
 ) {
 
   /** map endpoint response */
-  def map[Resp2](f: Resp => Resp2)(implicit M: Monad[F]): Endpoint[F, Req, Resp2] =
+  def map[Resp2](f: Resp => Resp2)(implicit M: Functor[F]): Endpoint[F, Req, Resp2] =
     copy(handle = req => handle(req).map(f), meta = filterMeta(f))
 
   /** map endpoint request */
