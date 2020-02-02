@@ -1,0 +1,655 @@
+
+      <!DOCTYPE html>
+      <html>
+      <head>
+        
+      <style type="text/css">
+
+        html {
+          font: 400 16px/24px Roboto,sans-serif;
+        }
+
+        .tag-desc {
+            color: #999999;
+            display: inline-block;
+            margin-left: 1em;
+        }
+
+        .operation {
+            margin-bottom: 10px;
+        }
+
+        .operation-expanded {
+            -webkit-box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.75);
+            -moz-box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.75);
+            box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.75);
+        }
+
+        .operation-expanded .operation-head {
+            position: relative;
+            border-bottom: 1px solid #999999;
+        }
+
+        .operation-head {
+            width: 100%;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .operation-head .method {
+            width: 4em;
+            padding: 0.2em;
+            display: inline-block;
+        }
+        .operation-head .url {
+            display: inline-block;
+        }
+        .operation-head .summary {
+            float: right;
+            margin-right: 0.3em;
+            font-size: 12px;
+        }
+
+        .operation-content {
+            padding-left: 1em;
+            padding-bottom: 1em;
+            padding-right: 1em;
+
+            overflow-y: hidden;
+        }
+
+        .closed {
+            max-height: 0;
+            padding-bottom: 0;
+        }
+
+        .method-GET .operation-head {
+            background-color: #e7f0f7;
+        }
+
+        .method-POST .operation-head {
+            background-color: #e7f6ec;
+        }
+
+        .method-PUT .operation-head {
+            background-color: #f9f2e9
+        }
+
+        .method-DELETE .operation-head {
+            background-color: #f5e8e8
+        }
+
+        .method-PATCH .operation-head {
+            background-color: #fdecee
+        }
+
+        .method-GET .method {
+            background-color: #0f6ab4;
+        }
+
+        .method-POST .method {
+            background-color: #10a54a;
+        }
+
+        .method-PUT .method {
+            background-color: #c5862b;
+        }
+
+        .method-DELETE .method {
+            background-color: #a41e22;
+        }
+
+        .method-PATCH .method {
+            background-color: #ff69b4
+        }
+
+        .method {
+            color: white;
+            text-align: center;
+            vertical-align: middle;
+            padding: 2px;
+        }
+
+        .type-link {
+            background-clip: padding-box;
+            border-bottom: 1px dashed rgba(0,102,204,.2);
+            color: #06c;
+            text-decoration: none;
+            -webkit-background-clip: padding-box;
+        }
+
+        .url {
+            font-style: italic;
+        }
+        .path-param {
+            font-weight: bold;
+            font-style: italic;
+            color: #ec407a;
+        }
+        .query-param {
+          font-style: italic;
+          color: #0BCD57;
+        }
+        .param-query {
+          color: #0BCD57;
+        }
+        table.pretty-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .pretty-table td, .pretty-table th {
+            padding-left: 0.5em;
+            padding-right: 0.5em;
+            padding-bottom: 0.3em;
+        }
+
+        .pretty-table th {
+            color: #999999;
+            font-weight: normal;
+            font-style: italic;
+            text-align: left;
+            padding-bottom: 0.3em;
+        }
+
+        .pretty-table tr:FIRST-CHILD {
+            border-bottom-width: 1px;
+            border-bottom-color: #999999;
+            border-bottom-style: solid;
+        }
+
+        .content-type {
+            float: right;
+            background-color: #8AC007;
+            color: white;
+            padding: 1px 4px 2px 4px;
+            -webkit-box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.75);
+            -moz-box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.75);
+            box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.75);
+        }
+
+        h3 {
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+
+        body {
+            color: #333333;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 960px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .head {
+          background-color: #8aa2be;
+        }
+        .head-wrap {
+            max-width: 960px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        </style>
+    
+      </head>
+      <body>
+        <div class="container">
+          <h1>Hello</h1>
+          
+         <h2>
+          tag1<span class='tag-desc'>tag1 description</span>
+         </h2>
+         
+        <div class="operation method-GET">
+          
+       <div class="operation-head" onclick="toggle(this)">
+          <div style="display:inline-block">
+            <div class="method">GET</div>
+            <div class="url">/e1/<span class="path-param">p1</span>/<span class="path-param">p2</span>?<span class="query-param">q1</span>&amp;<span class="query-param">q2</span>
+            </div>
+           </div>
+           <div class="summary">first GET endpoint</div>
+        </div>
+    
+          <div class="operation-content closed">
+            <div class="operation-desc">
+              this is long <s>HTML</s> description.<br>Second line here.
+          </div>
+            <div class="operation-params">
+         <h3>Parameters</h3>
+         <table class="pretty-table"><tr>
+           <th style="width:5em;max-width:5em">Name</th>
+           <th style="width:5em;max-width:5em">Type</th>
+           <th>Description</th>
+           <th style="width:5em;max-width:5em">Required</th> </tr>
+         <tr>
+                 <td class="param-path">p1</td>
+                 <td>int</td>
+                 <td>path param 1 description</td>
+                 <td>yes</td>
+                 </tr>
+                 <tr>
+                 <td class="param-path">p2</td>
+                 <td>long</td>
+                 <td>path param 2 description</td>
+                 <td>yes</td>
+                 </tr>
+                 <tr>
+                 <td class="param-query">q1</td>
+                 <td>string</td>
+                 <td>query param 1 description</td>
+                 <td>yes</td>
+                 </tr>
+                 <tr>
+                 <td class="param-query">q2</td>
+                 <td>boolean</td>
+                 <td>query param 2 description (opt)</td>
+                 <td>no</td>
+                 </tr>
+                 
+         </table>
+       </div>
+    
+            
+            <h3>Response body</h3>
+            <div class="content-type">application/test-response</div>
+            <a class="type-link" href="#TestBody">TestBody</a>
+            
+      <p class="type-desc">this is test body, suited both for request and response bodies</p>
+      <table class="pretty-table"><tr>
+         <th style="width:5em;max-width:5em">Name</th>
+         <th style="width:5em;max-width:5em">Type</th>
+         <th>Description</th>
+         <th style="width:5em;max-width:5em">Read-only</th>
+          <tr><td>e</td><td>MyEnum</td><td>enum example</td><td>no</td></tr><tr><td>i</td><td>int</td><td>this is int (ro)</td><td>yes</td></tr><tr><td>s</td><td>string</td><td>this is string</td><td>no</td></tr><tr><td>x.ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>x.ss</td><td>string</td><td>this is ss</td><td>no</td></tr><tr><td>xarr[].ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>xarr[].ss</td><td>string</td><td>this is ss</td><td>no</td></tr>
+       </table>
+      
+            
+          </div>
+        </div>
+     
+
+        <div class="operation method-POST">
+          
+       <div class="operation-head" onclick="toggle(this)">
+          <div style="display:inline-block">
+            <div class="method">POST</div>
+            <div class="url">/e1/<span class="path-param">p1</span>/<span class="path-param">p2</span>?<span class="query-param">q1</span>&amp;<span class="query-param">q2</span>
+            </div>
+           </div>
+           <div class="summary">first POST endpoint</div>
+        </div>
+    
+          <div class="operation-content closed">
+            <div class="operation-desc">
+              this is long <s>HTML</s> description.<br>Second line here.
+          </div>
+            <div class="operation-params">
+         <h3>Parameters</h3>
+         <table class="pretty-table"><tr>
+           <th style="width:5em;max-width:5em">Name</th>
+           <th style="width:5em;max-width:5em">Type</th>
+           <th>Description</th>
+           <th style="width:5em;max-width:5em">Required</th> </tr>
+         <tr>
+                 <td class="param-path">p1</td>
+                 <td>int</td>
+                 <td>path param 1 description</td>
+                 <td>yes</td>
+                 </tr>
+                 <tr>
+                 <td class="param-path">p2</td>
+                 <td>long</td>
+                 <td>path param 2 description</td>
+                 <td>yes</td>
+                 </tr>
+                 <tr>
+                 <td class="param-query">q1</td>
+                 <td>string</td>
+                 <td>query param 1 description (opt)</td>
+                 <td>no</td>
+                 </tr>
+                 <tr>
+                 <td class="param-query">q2</td>
+                 <td>boolean</td>
+                 <td>query param 2 description</td>
+                 <td>yes</td>
+                 </tr>
+                 
+         </table>
+       </div>
+    
+            <h3>Request body</h3>
+           <div class="content-type">application/test-request</div>
+           <a class="type-link" href="#TestBody">TestBody</a>
+           
+      <p class="type-desc">this is test body, suited both for request and response bodies</p>
+      <table class="pretty-table"><tr>
+         <th style="width:5em;max-width:5em">Name</th>
+         <th style="width:5em;max-width:5em">Type</th>
+         <th>Description</th>
+         <th style="width:5em;max-width:5em">Read-only</th>
+          <tr><td>e</td><td>MyEnum</td><td>enum example</td><td>no</td></tr><tr><td>i</td><td>int</td><td>this is int (ro)</td><td>yes</td></tr><tr><td>s</td><td>string</td><td>this is string</td><td>no</td></tr><tr><td>x.ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>x.ss</td><td>string</td><td>this is ss</td><td>no</td></tr><tr><td>xarr[].ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>xarr[].ss</td><td>string</td><td>this is ss</td><td>no</td></tr>
+       </table>
+      
+           
+            <h3>Response body</h3>
+            <div class="content-type">application/test-response</div>
+            <a class="type-link" href="#TestBody">TestBody</a>
+            
+      <p class="type-desc">this is test body, suited both for request and response bodies</p>
+      <table class="pretty-table"><tr>
+         <th style="width:5em;max-width:5em">Name</th>
+         <th style="width:5em;max-width:5em">Type</th>
+         <th>Description</th>
+         <th style="width:5em;max-width:5em">Read-only</th>
+          <tr><td>e</td><td>MyEnum</td><td>enum example</td><td>no</td></tr><tr><td>i</td><td>int</td><td>this is int (ro)</td><td>yes</td></tr><tr><td>s</td><td>string</td><td>this is string</td><td>no</td></tr><tr><td>x.ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>x.ss</td><td>string</td><td>this is ss</td><td>no</td></tr><tr><td>xarr[].ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>xarr[].ss</td><td>string</td><td>this is ss</td><td>no</td></tr>
+       </table>
+      
+            
+          </div>
+        </div>
+     
+        
+
+         <h2>
+          tag2<span class='tag-desc'>tag2 description</span>
+         </h2>
+         
+        <div class="operation method-DELETE">
+          
+       <div class="operation-head" onclick="toggle(this)">
+          <div style="display:inline-block">
+            <div class="method">DELETE</div>
+            <div class="url">/e2/delete?<span class="query-param">e</span>&amp;<span class="query-param">x</span>&amp;<span class="query-param">y</span>
+            </div>
+           </div>
+           <div class="summary">DELETE endpoint</div>
+        </div>
+    
+          <div class="operation-content closed">
+            <div class="operation-desc">
+              DELETE endpoint description
+          </div>
+            <div class="operation-params">
+         <h3>Parameters</h3>
+         <table class="pretty-table"><tr>
+           <th style="width:5em;max-width:5em">Name</th>
+           <th style="width:5em;max-width:5em">Type</th>
+           <th>Description</th>
+           <th style="width:5em;max-width:5em">Required</th> </tr>
+         <tr>
+                 <td class="param-query">x</td>
+                 <td>int</td>
+                 <td>this is X</td>
+                 <td>yes</td>
+                 </tr>
+                 <tr>
+                 <td class="param-query">y</td>
+                 <td>int</td>
+                 <td>this is Y</td>
+                 <td>yes</td>
+                 </tr>
+                 <tr>
+                 <td class="param-query">e</td>
+                 <td>MyEnum</td>
+                 <td>this is enum!</td>
+                 <td>yes</td>
+                 </tr>
+                 
+         </table>
+       </div>
+    
+            <h3>Request body</h3>
+           <div class="content-type">application/test-request</div>
+           <a class="type-link" href="#TestBody">TestBody</a>
+           
+      <p class="type-desc">this is test body, suited both for request and response bodies</p>
+      <table class="pretty-table"><tr>
+         <th style="width:5em;max-width:5em">Name</th>
+         <th style="width:5em;max-width:5em">Type</th>
+         <th>Description</th>
+         <th style="width:5em;max-width:5em">Read-only</th>
+          <tr><td>e</td><td>MyEnum</td><td>enum example</td><td>no</td></tr><tr><td>i</td><td>int</td><td>this is int (ro)</td><td>yes</td></tr><tr><td>s</td><td>string</td><td>this is string</td><td>no</td></tr><tr><td>x.ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>x.ss</td><td>string</td><td>this is ss</td><td>no</td></tr><tr><td>xarr[].ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>xarr[].ss</td><td>string</td><td>this is ss</td><td>no</td></tr>
+       </table>
+      
+           
+            <h3>Response body</h3>
+            <div class="content-type">application/test-response</div>
+            <a class="type-link" href="#TestBody">TestBody</a>
+            
+      <p class="type-desc">this is test body, suited both for request and response bodies</p>
+      <table class="pretty-table"><tr>
+         <th style="width:5em;max-width:5em">Name</th>
+         <th style="width:5em;max-width:5em">Type</th>
+         <th>Description</th>
+         <th style="width:5em;max-width:5em">Read-only</th>
+          <tr><td>e</td><td>MyEnum</td><td>enum example</td><td>no</td></tr><tr><td>i</td><td>int</td><td>this is int (ro)</td><td>yes</td></tr><tr><td>s</td><td>string</td><td>this is string</td><td>no</td></tr><tr><td>x.ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>x.ss</td><td>string</td><td>this is ss</td><td>no</td></tr><tr><td>xarr[].ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>xarr[].ss</td><td>string</td><td>this is ss</td><td>no</td></tr>
+       </table>
+      
+            
+          </div>
+        </div>
+     
+
+        <div class="operation method-PATCH">
+          
+       <div class="operation-head" onclick="toggle(this)">
+          <div style="display:inline-block">
+            <div class="method">PATCH</div>
+            <div class="url">/e2/<span class="path-param">x</span>/<span class="path-param">y</span>
+            </div>
+           </div>
+           <div class="summary">PATCH endpoint</div>
+        </div>
+    
+          <div class="operation-content closed">
+            <div class="operation-desc">
+              PATCH endpoint description
+          </div>
+            <div class="operation-params">
+         <h3>Parameters</h3>
+         <table class="pretty-table"><tr>
+           <th style="width:5em;max-width:5em">Name</th>
+           <th style="width:5em;max-width:5em">Type</th>
+           <th>Description</th>
+           <th style="width:5em;max-width:5em">Required</th> </tr>
+         <tr>
+                 <td class="param-path">x</td>
+                 <td>int</td>
+                 <td>this is X</td>
+                 <td>yes</td>
+                 </tr>
+                 <tr>
+                 <td class="param-path">y</td>
+                 <td>int</td>
+                 <td>this is Y</td>
+                 <td>yes</td>
+                 </tr>
+                 <tr>
+                 <td class="param-path">e</td>
+                 <td>MyEnum</td>
+                 <td>this is enum!</td>
+                 <td>yes</td>
+                 </tr>
+                 
+         </table>
+       </div>
+    
+            <h3>Request body</h3>
+           <div class="content-type">application/test-request</div>
+           <a class="type-link" href="#TestBody">TestBody</a>
+           
+      <p class="type-desc">this is test body, suited both for request and response bodies</p>
+      <table class="pretty-table"><tr>
+         <th style="width:5em;max-width:5em">Name</th>
+         <th style="width:5em;max-width:5em">Type</th>
+         <th>Description</th>
+         <th style="width:5em;max-width:5em">Read-only</th>
+          <tr><td>e</td><td>MyEnum</td><td>enum example</td><td>no</td></tr><tr><td>i</td><td>int</td><td>this is int (ro)</td><td>yes</td></tr><tr><td>s</td><td>string</td><td>this is string</td><td>no</td></tr><tr><td>x.ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>x.ss</td><td>string</td><td>this is ss</td><td>no</td></tr><tr><td>xarr[].ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>xarr[].ss</td><td>string</td><td>this is ss</td><td>no</td></tr>
+       </table>
+      
+           
+            <h3>Response body</h3>
+            <div class="content-type">application/test-response</div>
+            <a class="type-link" href="#TestBody">TestBody</a>
+            
+      <p class="type-desc">this is test body, suited both for request and response bodies</p>
+      <table class="pretty-table"><tr>
+         <th style="width:5em;max-width:5em">Name</th>
+         <th style="width:5em;max-width:5em">Type</th>
+         <th>Description</th>
+         <th style="width:5em;max-width:5em">Read-only</th>
+          <tr><td>e</td><td>MyEnum</td><td>enum example</td><td>no</td></tr><tr><td>i</td><td>int</td><td>this is int (ro)</td><td>yes</td></tr><tr><td>s</td><td>string</td><td>this is string</td><td>no</td></tr><tr><td>x.ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>x.ss</td><td>string</td><td>this is ss</td><td>no</td></tr><tr><td>xarr[].ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>xarr[].ss</td><td>string</td><td>this is ss</td><td>no</td></tr>
+       </table>
+      
+            
+          </div>
+        </div>
+     
+
+        <div class="operation method-PUT">
+          
+       <div class="operation-head" onclick="toggle(this)">
+          <div style="display:inline-block">
+            <div class="method">PUT</div>
+            <div class="url">/e2/<span class="path-param">x</span>/<span class="path-param">y</span>/<span class="path-param">e</span>
+            </div>
+           </div>
+           <div class="summary">PUT endpoint</div>
+        </div>
+    
+          <div class="operation-content closed">
+            <div class="operation-desc">
+              PUT endpoint description
+          </div>
+            <div class="operation-params">
+         <h3>Parameters</h3>
+         <table class="pretty-table"><tr>
+           <th style="width:5em;max-width:5em">Name</th>
+           <th style="width:5em;max-width:5em">Type</th>
+           <th>Description</th>
+           <th style="width:5em;max-width:5em">Required</th> </tr>
+         <tr>
+                 <td class="param-path">x</td>
+                 <td>int</td>
+                 <td>this is X</td>
+                 <td>yes</td>
+                 </tr>
+                 <tr>
+                 <td class="param-path">y</td>
+                 <td>int</td>
+                 <td>this is Y</td>
+                 <td>yes</td>
+                 </tr>
+                 <tr>
+                 <td class="param-path">e</td>
+                 <td>MyEnum</td>
+                 <td>this is enum!</td>
+                 <td>yes</td>
+                 </tr>
+                 
+         </table>
+       </div>
+    
+            <h3>Request body</h3>
+           <div class="content-type">application/test-request</div>
+           <a class="type-link" href="#TestBody">TestBody</a>
+           
+      <p class="type-desc">this is test body, suited both for request and response bodies</p>
+      <table class="pretty-table"><tr>
+         <th style="width:5em;max-width:5em">Name</th>
+         <th style="width:5em;max-width:5em">Type</th>
+         <th>Description</th>
+         <th style="width:5em;max-width:5em">Read-only</th>
+          <tr><td>e</td><td>MyEnum</td><td>enum example</td><td>no</td></tr><tr><td>i</td><td>int</td><td>this is int (ro)</td><td>yes</td></tr><tr><td>s</td><td>string</td><td>this is string</td><td>no</td></tr><tr><td>x.ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>x.ss</td><td>string</td><td>this is ss</td><td>no</td></tr><tr><td>xarr[].ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>xarr[].ss</td><td>string</td><td>this is ss</td><td>no</td></tr>
+       </table>
+      
+           
+            <h3>Response body</h3>
+            <div class="content-type">application/test-response</div>
+            <a class="type-link" href="#TestBody">TestBody</a>
+            
+      <p class="type-desc">this is test body, suited both for request and response bodies</p>
+      <table class="pretty-table"><tr>
+         <th style="width:5em;max-width:5em">Name</th>
+         <th style="width:5em;max-width:5em">Type</th>
+         <th>Description</th>
+         <th style="width:5em;max-width:5em">Read-only</th>
+          <tr><td>e</td><td>MyEnum</td><td>enum example</td><td>no</td></tr><tr><td>i</td><td>int</td><td>this is int (ro)</td><td>yes</td></tr><tr><td>s</td><td>string</td><td>this is string</td><td>no</td></tr><tr><td>x.ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>x.ss</td><td>string</td><td>this is ss</td><td>no</td></tr><tr><td>xarr[].ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>xarr[].ss</td><td>string</td><td>this is ss</td><td>no</td></tr>
+       </table>
+      
+            
+          </div>
+        </div>
+     
+        
+          <h2>Known types</h2>
+          
+        <div id="MyEnum" class="type-container">
+          <h4>MyEnum</h4>
+          
+      <p class="type-desc">Sealed trait enumeration description</p>
+    <i>First</i>, <i>Second</i>, <i>Third</i>
+    
+        </div>
+      
+
+        <div id="Params" class="type-container">
+          <h4>Params</h4>
+          
+      <p class="type-desc">parameters - suited both for path and query</p>
+      <table class="pretty-table"><tr>
+         <th style="width:5em;max-width:5em">Name</th>
+         <th style="width:5em;max-width:5em">Type</th>
+         <th>Description</th>
+         <th style="width:5em;max-width:5em">Read-only</th>
+          <tr><td>e</td><td>MyEnum</td><td>this is enum!</td><td>no</td></tr><tr><td>x</td><td>int</td><td>this is X</td><td>no</td></tr><tr><td>y</td><td>int</td><td>this is Y</td><td>no</td></tr>
+       </table>
+      
+        </div>
+      
+
+        <div id="TestBody" class="type-container">
+          <h4>TestBody</h4>
+          
+      <p class="type-desc">this is test body, suited both for request and response bodies</p>
+      <table class="pretty-table"><tr>
+         <th style="width:5em;max-width:5em">Name</th>
+         <th style="width:5em;max-width:5em">Type</th>
+         <th>Description</th>
+         <th style="width:5em;max-width:5em">Read-only</th>
+          <tr><td>e</td><td>MyEnum</td><td>enum example</td><td>no</td></tr><tr><td>i</td><td>int</td><td>this is int (ro)</td><td>yes</td></tr><tr><td>s</td><td>string</td><td>this is string</td><td>no</td></tr><tr><td>x.ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>x.ss</td><td>string</td><td>this is ss</td><td>no</td></tr><tr><td>xarr[].ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>xarr[].ss</td><td>string</td><td>this is ss</td><td>no</td></tr>
+       </table>
+      
+        </div>
+      
+
+        <div id="X" class="type-container">
+          <h4>X</h4>
+          
+      <p class="type-desc">this is inner class</p>
+      <table class="pretty-table"><tr>
+         <th style="width:5em;max-width:5em">Name</th>
+         <th style="width:5em;max-width:5em">Type</th>
+         <th>Description</th>
+         <th style="width:5em;max-width:5em">Read-only</th>
+          <tr><td>ii</td><td>int</td><td>this is ii (ro)</td><td>yes</td></tr><tr><td>ss</td><td>string</td><td>this is ss</td><td>no</td></tr>
+       </table>
+      
+        </div>
+      
+        </div>
+      
+        <script>
+            function toggle(hdr) {
+              var body = hdr.parentNode.querySelector(".operation-content")
+              body.classList.toggle("closed");
+              hdr.parentNode.classList.toggle("operation-expanded")
+            }
+        </script>
+    
+      </body>
+      </html>
+      

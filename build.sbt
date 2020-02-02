@@ -13,7 +13,7 @@ lazy val compilerOptions = Seq(
 )
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.12.4",
+  scalaVersion := "2.12.10",
   name := "fineroute",
   organization := "me.scf37",
   scalacOptions ++= compilerOptions

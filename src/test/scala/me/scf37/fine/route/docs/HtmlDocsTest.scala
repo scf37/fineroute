@@ -81,7 +81,7 @@ class HtmlDocsTest extends FreeSpec {
     endpoint
       .summary("first GET endpoint")
       .description("this is long <s>HTML</s> description.<br>Second line here.")
-      .tags("tag1")
+      .tag("tag1")
       .pathParam[Int]("p1", "path param 1 description")
       .pathParam[Long]("p2", "path param 2 description")
       .queryParam[String]("q1", "query param 1 description")
@@ -92,7 +92,7 @@ class HtmlDocsTest extends FreeSpec {
     endpoint
       .summary("first POST endpoint")
       .description("this is long <s>HTML</s> description.<br>Second line here.")
-      .tags("tag1")
+      .tag("tag1")
       .pathParam[Int]("p1", "path param 1 description")
       .pathParam[Long]("p2", "path param 2 description")
       .queryParam[Option[String]]("q1", "query param 1 description (opt)")
@@ -104,7 +104,7 @@ class HtmlDocsTest extends FreeSpec {
     endpoint
       .summary("PUT endpoint")
       .description("PUT endpoint description")
-      .tags("tag2")
+      .tag("tag2")
       .pathParams[Params]
       .consumes[TestBody]
       .produces[TestBody]
@@ -113,7 +113,7 @@ class HtmlDocsTest extends FreeSpec {
     endpoint
       .summary("PATCH endpoint")
       .description("PATCH endpoint description")
-      .tags("tag2")
+      .tag("tag2")
       .pathParams[Params]
       .consumes[TestBody]
       .produces[TestBody]
@@ -122,7 +122,7 @@ class HtmlDocsTest extends FreeSpec {
     endpoint
       .summary("DELETE endpoint")
       .description("DELETE endpoint description")
-      .tags("tag2")
+      .tag("tag2")
       .queryParams[Params]
       .consumes[TestBody]
       .produces[TestBody]

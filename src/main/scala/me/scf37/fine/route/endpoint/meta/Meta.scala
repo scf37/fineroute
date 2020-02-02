@@ -13,8 +13,11 @@ case class Meta(
   /** path pattern */
   pathPattern: String = "",
 
-  /** endpoint tags */
-  tags: List[String] = Nil,
+  /** endpoint tag, for grouping */
+  tag: String = "",
+
+  /** secondary tags, displayed on endpoint */
+  secondaryTags: List[SecondaryTag] = Nil,
 
   /** Short endpoint summary */
   summary: String = "",
@@ -36,6 +39,12 @@ case class Meta(
 
   /** any user-specific data, for tooling working with this meta */
   routeData: List[Any] = Nil
+)
+
+case class SecondaryTag(
+  name: String,
+  description: String,
+  bgColor: String
 )
 
 case class MetaResultCode(code: Int, desc: String, body: TypeTag[_])

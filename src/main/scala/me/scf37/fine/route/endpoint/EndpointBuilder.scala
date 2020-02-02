@@ -51,7 +51,9 @@ trait EndpointBuilder[F[_], Req, Resp, Produces, Handler, NextBuilder[_], RespBu
   def produces[T: TypeTag: ResponseBody]: RespBuilder[T]
 
   /** Add endpoint tags */
-  def tags(tag: String*): Self
+  def tag(tag: String): Self
+
+  def secondaryTag(name: String, description: String = "", bgColor: String = "#555555"): Self
 
   /** Set short endpoint summary */
   def summary(value: String): Self

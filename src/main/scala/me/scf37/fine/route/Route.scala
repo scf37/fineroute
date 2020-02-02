@@ -90,16 +90,9 @@ trait Route[F[_], Req, Resp] extends (RouteRequest => Option[Req => F[Resp]]) {
   def andThen(r: Route[F, Req, Resp]): Route[F, Req, Resp]
 
   def compose0[Req2, Resp2](filter: (RouteRequest => Option[Req => F[Resp]]) => (RouteRequest => Option[Req2 => F[Resp2]])): Route[F, Req2, Resp2]
-
-  def handleUnmatched(f: Req => F[Resp]): Route[F, Req, Resp]
-}
-
-trait CombinableRoute[F[_], Req, Resp] {
-  protected[route] def matcher: Matcher[Endpoint[F, Req, Resp]]
 }
 
 object Route {
-
   /**
    * Empty route
    *
@@ -186,9 +179,6 @@ object Route {
       Route.mk(filterRouteMeta(filter, meta))(filter(this))
     }
 
-    override def handleUnmatched(f: Req => F[Resp]): Route[F, Req, Resp] =
-      Route.mk(meta)(this).handleUnmatched(f)
-
     private def makeRequest(
       req: Req,
       unmatchedPath: String,
@@ -240,10 +230,6 @@ object Route {
     override def compose0[Req2, Resp2](filter: (RouteRequest => Option[Req => F[Resp]]) => (RouteRequest => Option[Req2 => F[Resp2]])): Route[F, Req2, Resp2] = {
       Route.mk(filterRouteMeta(filter, meta))(filter(this))
     }
-
-    override def handleUnmatched(f: Req => F[Resp]): Route[F, Req, Resp] = Route.mk(meta) { req =>
-      this.apply(req).orElse(Some(f))
-    }
   }
 
   private def filterMeta(filter: Any, meta: Meta): Meta = filter match {
@@ -255,5 +241,11 @@ object Route {
     case f: MetaFilter => meta.copy(endpointMetas = meta.endpointMetas.map(f.filterMeta))
     case _ => meta
   }
+
+  // interface for route implementations based on combinable matcher
+  private[route] trait CombinableRoute[F[_], Req, Resp] {
+    protected[route] def matcher: Matcher[Endpoint[F, Req, Resp]]
+  }
+
 
 }

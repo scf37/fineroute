@@ -35,7 +35,7 @@ class EndpointBuilderTest extends FreeSpec {
 
       .summary("summary")
       .description("description")
-      .tags("tag1", "tag2")
+      .tag("tag1")
       .pathParam[Long]("pathParam", "pathParam description")
       .queryParam[Int]("queryParam", "queryParam description")
       .pathParams[Params]
@@ -64,7 +64,7 @@ class EndpointBuilderTest extends FreeSpec {
     val m = route.meta
     assert(m.summary == "summary")
     assert(m.description == "description")
-    assert(m.tags == List("tag1", "tag2"))
+    assert(m.tag == "tag1")
     assert(m.method == MetaMethod.POST)
     assert(m.routeData == List("hello"))
     assert(m.consumes.get.mime == "application/x-www-form-urlencoded")

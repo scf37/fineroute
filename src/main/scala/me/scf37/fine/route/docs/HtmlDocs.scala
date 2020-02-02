@@ -12,11 +12,7 @@ import me.scf37.fine.route.docs.impl.IPrimitive
 import me.scf37.fine.route.docs.impl.IType
 import me.scf37.fine.route.docs.impl.IUnit
 import me.scf37.fine.route.docs.impl.Introspector
-import me.scf37.fine.route.endpoint.meta.Meta
-import me.scf37.fine.route.endpoint.meta.MetaBody
-import me.scf37.fine.route.endpoint.meta.MetaMethod
-import me.scf37.fine.route.endpoint.meta.MultiMetaParameter
-import me.scf37.fine.route.endpoint.meta.SingleMetaParameter
+import me.scf37.fine.route.endpoint.meta.{Meta, MetaBody, MetaMethod, MultiMetaParameter, SecondaryTag, SingleMetaParameter}
 
 object HtmlDocs {
   /**
@@ -34,7 +30,7 @@ object HtmlDocs {
     routeMeta: RouteMeta,
     introspector: Introspector = Introspector
   ): String = {
-    val endpointsByTag = routeMeta.endpointMetas.groupBy(_.tags.headOption.getOrElse("")).map {
+    val endpointsByTag = routeMeta.endpointMetas.groupBy(_.tag).map {
       case (tag, ops) =>
         val methodOrder = Seq(MetaMethod.GET, MetaMethod.POST, MetaMethod.PUT, MetaMethod.PATCH, MetaMethod.DELETE).zipWithIndex.toMap
         (tag, ops.sortBy(op =>
@@ -106,7 +102,7 @@ object HtmlDocs {
       }.sorted
       s"""
         <div class="operation method-${e.method}">
-          ${operationHead(e.method.toString, e.pathPattern, queryParams, e.summary)}
+          ${operationHead(e.method.toString, e.pathPattern, queryParams, e.summary, e.secondaryTags)}
           <div class="operation-content closed">
             ${description(e.description)}
             ${operationParams(e, i)}
@@ -264,7 +260,7 @@ object HtmlDocs {
           </div>"""
     else ""
 
-  private def operationHead(method: String, path: String, queryParams: Seq[String], summary: String): String =
+  private def operationHead(method: String, path: String, queryParams: Seq[String], summary: String, tags: Seq[SecondaryTag]): String =
     s"""
        <div class="operation-head" onclick="toggle(this)">
           <div style="display:inline-block">
@@ -276,9 +272,19 @@ object HtmlDocs {
     }
             </div>
            </div>
-           <div class="summary">${summary}</div>
+           <div class="summary">${
+            tags.map(t => s"<span style='background-color:${escapeHtml(t.bgColor)};border-radius:4px;color:white;padding:0.3em' title='${escapeHtml(t.description)}'>${t.name}</span>").mkString
+            }${summary}
+          </div>
         </div>
     """
+
+  private def escapeHtml(s: String): String = {
+    s.replace("&", "&amp;")
+      .replace("<", "&lt;")
+      .replace("\"", "&quot;")
+      .replace("\'", "&apos;")
+  }
 
   private def description(annotations: Seq[Annotation]): String = annotations.collectFirst {
     case a: Description => a.value()

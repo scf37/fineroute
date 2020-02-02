@@ -9,12 +9,7 @@ import me.scf37.fine.route.RouteNoQueryParameterException
 import me.scf37.fine.route.endpoint.Endpoint
 import me.scf37.fine.route.endpoint.EndpointBuilder
 import me.scf37.fine.route.endpoint.MatchedRequest
-import me.scf37.fine.route.endpoint.meta.Meta
-import me.scf37.fine.route.endpoint.meta.MetaBody
-import me.scf37.fine.route.endpoint.meta.MetaMethod
-import me.scf37.fine.route.endpoint.meta.MetaResultCode
-import me.scf37.fine.route.endpoint.meta.MultiMetaParameter
-import me.scf37.fine.route.endpoint.meta.SingleMetaParameter
+import me.scf37.fine.route.endpoint.meta.{Meta, MetaBody, MetaMethod, MetaResultCode, MultiMetaParameter, SecondaryTag, SingleMetaParameter}
 import me.scf37.fine.route.typeclass.RequestBody
 import me.scf37.fine.route.typeclass.RequestParam
 import me.scf37.fine.route.typeclass.RequestParams
@@ -82,7 +77,10 @@ trait EndpointBuilderImpl[F[_], Req, Resp, Produces, Handler, NextBuilder[_], Re
     ), identity)
   )
 
-  override def tags(tag: String*): Self = self(meta => meta.copy(tags = meta.tags ++ tag))
+  override def tag(tag: String): Self = self(meta => meta.copy(tag = tag))
+
+  override def secondaryTag(name: String, description: String = "", bgColor: String = "#555555") : Self =
+    self(meta => meta.copy(secondaryTags = meta.secondaryTags :+ SecondaryTag(name, description, bgColor)))
 
   override def summary(value: String): Self = self(_.copy(summary = value))
 

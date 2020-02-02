@@ -5,7 +5,7 @@ import me.scf37.fine.route.endpoint.Endpoint
 import me.scf37.fine.route.matcher.Matcher
 import me.scf37.fine.route.typeclass.{RouteHttpRequest, RouteHttpResponse}
 
-trait RouteDsl[F[_], Req, Resp] extends Route[F, Req, Resp] with CombinableRoute[F, Req, Resp] {
+trait RouteDsl[F[_], Req, Resp] extends Route[F, Req, Resp] with Route.CombinableRoute[F, Req, Resp] {
   /** MonadError instance for F, implement it
    *
    * It is important to implement it as def, not as val to avoid NPEs due to val initialization order
@@ -55,7 +55,5 @@ trait RouteDsl[F[_], Req, Resp] extends Route[F, Req, Resp] with CombinableRoute
 
   override def compose0[Req2, Resp2](filter: (RouteRequest => Option[Req => F[Resp]]) => RouteRequest => Option[Req2 => F[Resp2]]): Route[F, Req2, Resp2] = route.compose0(filter)
 
-  override def handleUnmatched(f: Req => F[Resp]): Route[F, Req, Resp] = route.handleUnmatched(f)
-
-  override protected[route] def matcher: Matcher[Endpoint[F, Req, Resp]] = route.asInstanceOf[CombinableRoute[F, Req, Resp]].matcher
+  override protected[route] def matcher: Matcher[Endpoint[F, Req, Resp]] = route.asInstanceOf[Route.CombinableRoute[F, Req, Resp]].matcher
 }
