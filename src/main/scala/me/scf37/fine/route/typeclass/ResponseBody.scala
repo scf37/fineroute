@@ -6,7 +6,10 @@ package me.scf37.fine.route.typeclass
  * @tparam T
  */
 trait ResponseBody[T] {
+  /** output content type */
   def contentType: String
+
+  /** Serialize T to bytes */
   def write(body: T): Either[Throwable, Array[Byte]]
 }
 

@@ -77,7 +77,7 @@ trait EndpointBuilderImpl[F[_], Req, Resp, Produces, Handler, NextBuilder[_], Re
     ), identity)
   )
 
-  override def tag(tag: String): Self = self(meta => meta.copy(tag = tag))
+  override def tag(tag: String, description: String = ""): Self = self(meta => meta.copy(tag = tag, description = if (description.nonEmpty) description else meta.description))
 
   override def secondaryTag(name: String, description: String = "", bgColor: String = "#555555") : Self =
     self(meta => meta.copy(secondaryTags = meta.secondaryTags :+ SecondaryTag(name, description, bgColor)))

@@ -16,6 +16,9 @@ case class Meta(
   /** endpoint tag, for grouping */
   tag: String = "",
 
+  /** endpoint tag description */
+  tagDescription: String = "",
+
   /** secondary tags, displayed on endpoint */
   secondaryTags: List[SecondaryTag] = Nil,
 

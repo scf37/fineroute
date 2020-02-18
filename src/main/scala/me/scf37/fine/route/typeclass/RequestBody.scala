@@ -6,7 +6,10 @@ package me.scf37.fine.route.typeclass
  * @tparam T
  */
 trait RequestBody[T] {
+  /** parse request body to T */
   def parse(request: Array[Byte]): Either[Throwable, T]
+
+  /** Expected content/type */
   def contentType: String
 }
 
