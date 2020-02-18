@@ -12,6 +12,10 @@ case class RouteMeta(
   endpointMetas: Seq[Meta]
 ) {
   def ++(other: RouteMeta): RouteMeta = RouteMeta(endpointMetas ++ other.endpointMetas)
+
+  override def toString: String = "Route\n" + endpointMetas.groupBy(_.tag).map { case (tag, endp) =>
+    "  " + tag + "\n" + endp.sortBy(e => (e.pathPattern, e.method.toString)).map("    " + _).mkString("\n")
+  }.mkString("\n")
 }
 
 object RouteMeta {

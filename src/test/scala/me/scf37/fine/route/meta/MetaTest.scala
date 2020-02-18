@@ -1,6 +1,4 @@
-package me.scf37.fine.route.docs
-
-import java.nio.file.{Files, Paths}
+package me.scf37.fine.route.meta
 
 import cats.MonadError
 import cats.implicits._
@@ -9,17 +7,17 @@ import me.scf37.fine.route.model.{Request, Response}
 import me.scf37.fine.route.typeclass._
 import org.scalatest.FreeSpec
 
-@Description("this is test body, suited both for request and response bodies")
+//@Description("this is test body, suited both for request and response bodies")
 case class TestBody(
-  @Description("this is int (ro)") @ReadOnly
+  //@Description("this is int (ro)") @ReadOnly
   i: Int,
-  @Description("this is string")
+  //@Description("this is string")
   s: String,
-  @Description("enum example")
+  //@Description("enum example")
   e: MyEnum,
-  @Description("this is nested X")
+  //@Description("this is nested X")
   x: X,
-  @Description("this is nested array of X")
+  //@Description("this is nested array of X")
   xarr: Seq[X]
 )
 
@@ -37,25 +35,25 @@ object TestBody {
   }
 }
 
-@Description("this is inner class")
+//@Description("this is inner class")
 case class X(
-  @Description("this is ii (ro)") @ReadOnly
+  //@Description("this is ii (ro)") @ReadOnly
   ii: Int,
-  @Description("this is ss")
+  //@Description("this is ss")
   ss: String
 )
 
-@Description("parameters - suited both for path and query")
+//@Description("parameters - suited both for path and query")
 case class Params(
-  @Description("this is X")
+  //@Description("this is X")
   x: Int,
-  @Description("this is Y")
+  //@Description("this is Y")
   y: Int,
-  @Description("this is enum!")
+  //@Description("this is enum!")
   e: MyEnum
 )
 
-@Description("Sealed trait enumeration description")
+//@Description("Sealed trait enumeration description")
 sealed trait MyEnum
 object MyEnum {
   case object First extends MyEnum
@@ -70,7 +68,7 @@ object Params {
   }
 }
 
-class HtmlDocsTest extends FreeSpec {
+class MetaTest extends FreeSpec {
   trait EitherRoute extends RouteDsl[Either[Throwable, ?], Request, Response] {
     override protected def monadError: MonadError[Either[Throwable, ?], Throwable] = implicitly[MonadError[Either[Throwable, ?], Throwable]]
     override protected def routeHttpRequest: RouteHttpRequest[Request] = implicitly[RouteHttpRequest[Request]]
@@ -129,9 +127,9 @@ class HtmlDocsTest extends FreeSpec {
       .delete("/e2/delete")((a, b) => ???)
   }
 
-  "write route docs" in {
-    val html = HtmlDocs.generateHtml("<h1>Hello</h1>", Map("tag1" -> "tag1 description", "tag2" -> "tag2 description"), r.meta)
-    Files.write(Paths.get("1.html"), html.getBytes("utf-8"))
+  "collect route meta" in {
+    assert(r.meta.endpointMetas.nonEmpty)
+    println(r.meta)
   }
 
 

@@ -39,7 +39,11 @@ case class Meta(
 
   /** any user-specific data, for tooling working with this meta */
   routeData: List[Any] = Nil
-)
+) {
+  override def toString: String = method + " " + pathPattern + " " + summary
+}
+
+
 
 case class SecondaryTag(
   name: String,

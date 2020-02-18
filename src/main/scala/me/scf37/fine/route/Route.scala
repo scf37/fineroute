@@ -89,6 +89,16 @@ trait Route[F[_], Req, Resp] extends (RouteRequest => Option[Req => F[Resp]]) {
    */
   def andThen(r: Route[F, Req, Resp]): Route[F, Req, Resp]
 
+  /**
+   * Wrap this route with Raw filter. Raw filter is executed before matching.
+   *
+   * Raw filter is a function that takes route function and produces another route function.
+   *
+   * @param filter
+   * @tparam Req2
+   * @tparam Resp2
+   * @return
+   */
   def compose0[Req2, Resp2](filter: (RouteRequest => Option[Req => F[Resp]]) => (RouteRequest => Option[Req2 => F[Resp2]])): Route[F, Req2, Resp2]
 }
 

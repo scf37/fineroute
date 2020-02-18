@@ -13,7 +13,7 @@ case class Matcher[E](
 ) {
 
   /**
-   * Add new endpoint to this matched
+   * Add new endpoint to this matcher
    *
    * @param e
    * @return matcher with this endpoint
