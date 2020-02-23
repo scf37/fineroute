@@ -14,9 +14,10 @@ lazy val compilerOptions = Seq(
 
 lazy val commonSettings = Seq(
   scalaVersion := "2.12.10",
-  name := "fineroute",
   organization := "me.scf37",
-  scalacOptions ++= compilerOptions
+  scalacOptions ++= compilerOptions,
+  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
+  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
 )
 
 lazy val testDeps = libraryDependencies ++= Seq(
@@ -25,16 +26,25 @@ lazy val testDeps = libraryDependencies ++= Seq(
 
 scalaVersion := "2.12.6"
 
-lazy val fineroute = project.in(file("."))
+lazy val core = project.in(file("core"))
   .settings(
+    name := "core",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.typelevel" %% "cats-effect" % "1.3.1",
-      "com.softwaremill.tapir" %% "tapir-core" % "0.10.1"
     ),
     testDeps,
     commonSettings
   )
 
-addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
+lazy val openapi = project.in(file("openapi"))
+  .dependsOn(core)
+  .settings(
+    name := "openapi",
+    libraryDependencies ++= Seq(
+      "io.swagger.core.v3" % "swagger-core" % "2.1.1",
+      "io.swagger.core.v3" % "swagger-models" % "2.1.1"
+    ),
+    testDeps,
+    commonSettings
+  )
