@@ -108,7 +108,7 @@ case class PlainPathNode[V](
   override def combine(node: PathNode[V]): PathNode[V] = {
     node match {
       case PlainPathNode(value, children) =>
-        if (node.value.isDefined && value.isDefined)
+        if (value.isDefined && this.value.isDefined)
           throw new IllegalArgumentException("Duplicate path")
 
         PlainPathNode(
@@ -167,7 +167,7 @@ case class VarPathNode[V](
       case VarPathNode(name, value, node) =>
         if (name != this.name)
           throw new IllegalArgumentException(s"Conflicting path variable name in path: '$name' vs '${this.name}'")
-        if (node.value.isDefined && value.isDefined)
+        if (value.isDefined && this.value.isDefined)
           throw new IllegalArgumentException("Duplicate path")
         VarPathNode(name, this.value.orElse(value), node.combine(this.node))
 
