@@ -12,7 +12,7 @@ import me.scf37.fine.route.RouteMeta
 import me.scf37.fine.route.endpoint.meta.{Meta, MetaMethod, MultiMetaParameter, SingleMetaParameter}
 import me.scf37.fine.route.openapi.impl._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.reflect.runtime.universe
 

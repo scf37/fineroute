@@ -2,6 +2,7 @@ package me.scf37.fine.route.openapi.impl
 
 import java.lang.annotation.Annotation
 
+import scala.collection.immutable.ArraySeq
 import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 
@@ -50,7 +51,7 @@ object Introspector extends Introspector {
 
           paramList.zip(javaCtor.getParameterAnnotations).map {
             case (paramSymbol, paramAnnotations) =>
-              IField(paramSymbol.name.decodedName.toString.trim, paramAnnotations, doIntrospect(paramSymbol.typeSignature, knownTypes))
+              IField(paramSymbol.name.decodedName.toString.trim, ArraySeq.unsafeWrapArray(paramAnnotations), doIntrospect(paramSymbol.typeSignature, knownTypes))
           }
         }
       }.fold(Seq.empty[IField])(identity)
@@ -60,19 +61,19 @@ object Introspector extends Introspector {
 
     if (t =:= typeOf[Unit] || t =:= typeOf[Nothing])
       IUnit
-    else if (t <:< typeOf[TraversableOnce[_]])
+    else if (t <:< typeOf[IterableOnce[_]])
       IList(doIntrospect(t.typeArgs.head, knownTypes))
     else if (t <:< typeOf[Option[_]])
       IOption(doIntrospect(t.typeArgs.head, knownTypes))
     else if (t.typeSymbol.isClass && t.typeSymbol.asClass.isTrait && getKnownSubclasses(t).nonEmpty)
-      IEnum(typeName, annotations, sealedTraitEnumValues(t))
+      IEnum(typeName, ArraySeq.unsafeWrapArray(annotations), sealedTraitEnumValues(t))
     else if (c.isPrimitive || c.getName.startsWith("java.") || c.getName.startsWith("scala."))
-      IPrimitive(typeName.charAt(0).toLower + c.getSimpleName.substring(1))
+      IPrimitive(typeName.charAt(0).toLower.toString + c.getSimpleName.substring(1))
     else {
       if (knownTypes.contains(typeName))
         ICaseClassRef(typeName)
       else
-        ICaseClass(typeName, annotations, fields(t, c, knownTypes + typeName))
+        ICaseClass(typeName, ArraySeq.unsafeWrapArray(annotations), fields(t, c, knownTypes + typeName))
     }
   }
 

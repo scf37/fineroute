@@ -5,7 +5,7 @@ import cats.implicits._
 import me.scf37.fine.route.RouteDsl
 import me.scf37.fine.route.model.{Request, Response}
 import me.scf37.fine.route.typeclass._
-import org.scalatest.FreeSpec
+import org.scalatest.freespec.AnyFreeSpec
 
 //@Description("this is test body, suited both for request and response bodies")
 case class TestBody(
@@ -68,7 +68,7 @@ object Params {
   }
 }
 
-class MetaTest extends FreeSpec {
+class MetaTest extends AnyFreeSpec {
   trait EitherRoute extends RouteDsl[Either[Throwable, ?], Request, Response] {
     override protected def monadError: MonadError[Either[Throwable, ?], Throwable] = implicitly[MonadError[Either[Throwable, ?], Throwable]]
     override protected def routeHttpRequest: RouteHttpRequest[Request] = implicitly[RouteHttpRequest[Request]]

@@ -6,7 +6,7 @@ import me.scf37.fine.route.endpoint.meta.Meta
 /**
   * Metadata on route
   *
-  * @param endpointMetas metadata every route endpoint
+  * @param endpointMetas metadata for every route endpoint
   */
 case class RouteMeta(
   endpointMetas: Seq[Meta]

@@ -1,8 +1,8 @@
 package me.scf37.fine.route.matcher
 
-import org.scalatest.FreeSpec
+import org.scalatest.freespec.AnyFreeSpec
 
-class MatcherTest extends FreeSpec {
+class MatcherTest extends AnyFreeSpec {
   "simple paths match" in {
     var pt: PathNode[String] = EmptyPathNode[String]()
     def check(path: Array[String]): Unit = {

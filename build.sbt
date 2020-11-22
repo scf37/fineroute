@@ -6,32 +6,28 @@ lazy val compilerOptions = Seq(
   "-language:implicitConversions",
   "-language:higherKinds",
   "-unchecked",
-  "-Yno-adapted-args",
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
   "-Xlint"
 )
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.12.10",
+  scalaVersion := "2.13.2",
   organization := "me.scf37",
   scalacOptions ++= compilerOptions,
-  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
-  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
+  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
 )
 
 lazy val testDeps = libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "3.0.0" % "test, provided"
+  "org.scalatest" %% "scalatest" % "3.1.2" % "test, provided"
 )
-
-scalaVersion := "2.12.6"
 
 lazy val core = project.in(file("core"))
   .settings(
     name := "core",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.typelevel" %% "cats-effect" % "1.3.1",
+      "org.typelevel" %% "cats-effect" % "2.2.0",
     ),
     testDeps,
     commonSettings

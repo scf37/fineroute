@@ -17,13 +17,13 @@ import me.scf37.fine.route.model.RequestBody1
 import me.scf37.fine.route.model.Response
 import me.scf37.fine.route.model.ResponseBody1
 import me.scf37.fine.route.typeclass.RouteHttpResponse
-import org.scalatest.FreeSpec
+import org.scalatest.freespec.AnyFreeSpec
 
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
-class EndpointBuilderTest extends FreeSpec {
+class EndpointBuilderTest extends AnyFreeSpec {
   import scala.concurrent.ExecutionContext.Implicits.global
   implicit val respT = new RouteHttpResponse[Response] {
     override def write(arr: Array[Byte], contentType: String): Either[Throwable, Response] =
